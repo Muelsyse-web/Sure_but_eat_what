@@ -1,0 +1,9 @@
+.DS_Store
+.superpowers/
+.claude/
+project.private.config.json
+docs/superpowers/
+node_modules/
+miniprogram_npm/
+.env
+.env.*

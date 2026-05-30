@@ -1,0 +1,17 @@
+{
+  "cloud": true,
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "今天吃啥机"
+  },
+  "permission": {
+    "scope.userFuzzyLocation": {
+      "desc": "我们需要你的大致位置来寻找附近的餐厅"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getFuzzyLocation"
+  ]
+}

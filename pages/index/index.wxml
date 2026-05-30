@@ -1,0 +1,413 @@
+<!-- 今天吃啥机 — 主页面 -->
+<view class="page">
+  <view class="ambient-barrage">
+    <text class="ambient-line line-a">吃什么？</text>
+    <text class="ambient-line line-b">是啊是啊</text>
+    <text class="ambient-line line-c">天意正在加载</text>
+  </view>
+
+  <!-- 标题区域 -->
+  <view class="header">
+    <view class="title-group">
+      <text class="title">陈留大食堂</text>
+      <text class="subtitle">是啊，吃什么？</text>
+    </view>
+    <view wx:if="{{appMode !== 'choice'}}" class="mode-back" bindtap="onBackToChoice">返回</view>
+    <view wx:if="{{appMode === 'nearby'}}" class="filter-icon" bindtap="onOpenFilter">
+      <text class="icon-text {{filterLabels.length > 0 ? 'active' : ''}}">天</text>
+      <view wx:if="{{filterLabels.length > 0}}" class="filter-dot"></view>
+    </view>
+  </view>
+
+  <!-- 当前激活的筛选标签 -->
+  <view wx:if="{{appMode === 'nearby' && filterLabels.length > 0}}" class="filter-chips">
+    <view wx:for="{{filterLabels}}" wx:key="index" class="chip">
+      {{item}}
+    </view>
+    <view class="chip clear-chip" bindtap="resetFilters">
+      恢复天意
+    </view>
+  </view>
+
+  <!-- 入口选择 -->
+  <view wx:if="{{appMode === 'choice'}}" class="mode-choice">
+    <view class="meme-dialogue">
+      <text class="meme-question">吃什么？</text>
+      <text class="meme-answer">是啊，吃什么？</text>
+    </view>
+    <view class="banquet-mark">饭点精神状态检测中</view>
+    <button class="choice-button primary-choice" bindtap="onChooseManual">我有饭局名单</button>
+    <button class="choice-button secondary-choice" bindtap="onChooseNearby">附近有什么？</button>
+    <text class="choice-hint">严肃决策，随机执行。</text>
+  </view>
+  <button wx:if="{{appMode === 'choice'}}" class="reward-button" bindtap="onOpenReward">赏些银两</button>
+
+  <view wx:if="{{easterEggText}}" class="easter-egg">{{easterEggText}}</view>
+
+  <!-- 手动候选：8 个以内用转盘 -->
+  <view wx:if="{{appMode === 'manual' && manualPickerType === 'wheel'}}" class="manual-picker">
+    <view class="picker-caption">
+      <text class="caption-main">说出吾名</text>
+      <text class="caption-sub">候选不超过 8 个时，天意会转成一个圈</text>
+    </view>
+    <view class="manual-wheel-wrapper">
+      <canvas
+        type="2d"
+        id="manualWheelCanvas"
+        class="manual-wheel-canvas"
+        hidden="{{showAddCandidateModal || showSaveWheelModal || showSavedWheelsModal || showRenameWheelModal || showEditWheelItemsModal || showModal}}"
+        style="width:300px;height:300px;"
+      ></canvas>
+    </view>
+    <button class="add-candidate-button" bindtap="onOpenAddCandidate">+</button>
+  </view>
+
+  <view wx:if="{{appMode === 'manual'}}" class="manual-wheel-actions">
+    <button class="save-wheel-button" bindtap="onOpenSaveWheel">保存转盘</button>
+    <button class="load-wheel-button" bindtap="onOpenSavedWheels">往日种种，你当真不记得了吗？</button>
+  </view>
+
+  <!-- 抽选区域 -->
+  <view wx:if="{{appMode === 'nearby' || (appMode === 'manual' && manualPickerType === 'slot')}}" class="slot-container">
+    <view class="slot-machine">
+      <view class="slot-topline">
+        <text>弹幕抽菜机</text>
+        <text>{{filterLabels.length > 0 ? '天意已被干预' : '天意自由发挥'}}</text>
+      </view>
+      <view class="slot-window">
+        <view class="slot-barrage">
+          <text>优势在胃</text>
+          <text>是啊是啊</text>
+          <text>接着抽</text>
+        </view>
+        <view class="slot-highlight"></view>
+        <view
+          class="slot-reel {{slotAnimating ? 'animating' : ''}}"
+          style="transform: {{slotTransform}};"
+        >
+          <view wx:for="{{slotItems}}" wx:key="slotKey" class="slot-item">
+            <text class="slot-emoji">{{item.emoji}}</text>
+            <view class="slot-copy">
+              <text class="slot-name">{{item.name}}</text>
+              <text class="slot-meta">{{item.meta}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 无数据时的占位提示 -->
+      <view wx:if="{{slotItems.length === 0 && !loading}}" class="slot-placeholder">
+        <text class="placeholder-title">{{appMode === 'manual' ? '席上无人' : (nearbyHasFetched ? '天意沉默了' : '天意尚未开坛')}}</text>
+        <text class="placeholder-copy">{{appMode === 'manual' ? '先写几个想吃的，再让天意发挥' : (nearbyHasFetched ? '附近暂时没找到符合条件的饭局' : '点一下获取天意，再劳烦地图开口')}}</text>
+      </view>
+    </view>
+    <button wx:if="{{appMode === 'manual'}}" class="add-candidate-button slot-add-button" bindtap="onOpenAddCandidate">+</button>
+  </view>
+
+  <!-- 旋转按钮 -->
+  <view wx:if="{{appMode !== 'choice'}}" class="spin-button-area">
+    <button
+      wx:if="{{appMode === 'nearby'}}"
+      class="fetch-nearby-button"
+      bindtap="onFetchNearbyIntent"
+      disabled="{{loading || spinning}}"
+    >
+      {{loading ? '天意正在搜索' : '获取天意'}}
+    </button>
+    <button
+      class="spin-button {{spinning ? 'spinning' : ''}} {{restaurantCount === 0 ? 'disabled' : ''}}"
+      bindtap="onSpin"
+      disabled="{{spinning || restaurantCount === 0 || loading}}"
+    >
+      <text wx:if="{{loading}}">天意正在搜索附近饭局</text>
+      <text wx:elif="{{spinning}}">菜单正在被侵蚀</text>
+      <text wx:else>让天意决定</text>
+    </button>
+    <text wx:if="{{restaurantCount > 0 && !loading}}" class="available-count">
+      {{appMode === 'manual' ? '名单里有 ' : '附近找到 '}}{{restaurantCount}} 家可选
+    </text>
+  </view>
+
+  <!-- 筛选面板（Bottom Sheet） -->
+  <view
+    id="filterOverlay"
+    class="filter-overlay {{showFilterPanel ? 'visible' : ''}}"
+    bindtap="onFilterOverlayTap"
+  >
+    <view class="filter-panel {{showFilterPanel ? 'visible' : ''}}" catchtap="noop">
+
+      <view class="filter-header">
+      <text class="filter-title">天意校准</text>
+        <text class="filter-close" bindtap="onCloseFilter">✕</text>
+      </view>
+
+      <!-- 菜系选择 -->
+      <view class="filter-section">
+        <text class="filter-section-title">天意偏向哪一口</text>
+        <scroll-view scroll-x class="cuisine-scroll">
+          <view class="cuisine-list">
+            <view
+              wx:for="{{cuisineTags}}"
+              wx:key="name"
+              class="cuisine-tag {{item.selected ? 'selected' : ''}}"
+              data-cuisine="{{item.name}}"
+              bindtap="onSelectCuisine"
+            >
+              {{item.name}}
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 人均消费 -->
+      <view class="filter-section">
+        <text class="filter-section-title">钱包承受范围</text>
+        <view class="cost-inputs">
+          <input
+            class="cost-input"
+            type="number"
+            placeholder="最低 ¥0"
+            value="{{costMinInput}}"
+            bindinput="onCostMinInput"
+          />
+          <text class="cost-separator">—</text>
+          <input
+            class="cost-input"
+            type="number"
+            placeholder="最高不限"
+            value="{{costMaxInput}}"
+            bindinput="onCostMaxInput"
+          />
+        </view>
+      </view>
+
+      <!-- 最大距离 -->
+      <view class="filter-section">
+        <text class="filter-section-title">腿能走多远</text>
+        <view class="distance-input-row">
+          <input
+            class="distance-input"
+            type="number"
+            placeholder="最多 1000 米"
+            value="{{distanceMaxInput}}"
+            bindinput="onDistanceMaxInput"
+          />
+          <text class="distance-unit">米内</text>
+        </view>
+        <text class="filter-hint">范围限制为 10-1000 米，留空则默认 1000 米。腿：优势不大。</text>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="filter-actions">
+        <button class="filter-reset" bindtap="onCloseFilter">先不干预</button>
+        <button class="filter-apply" bindtap="onApplyFilter">干预一下</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加候选餐厅 -->
+  <view class="candidate-overlay {{showAddCandidateModal ? 'visible' : ''}}" bindtap="onCancelAddCandidate">
+    <view class="candidate-dialog {{showAddCandidateModal ? 'visible' : ''}}" catchtap="noop">
+      <text class="candidate-title">把饭局供上来</text>
+      <input
+        class="candidate-input"
+        placeholder="写下餐厅名，比如楼下牛肉面"
+        value="{{candidateInput}}"
+        bindinput="onCandidateInput"
+        focus="{{showAddCandidateModal}}"
+      />
+      <view class="candidate-actions">
+        <button class="candidate-cancel" bindtap="onCancelAddCandidate">容我再想</button>
+        <button class="candidate-confirm" bindtap="onConfirmAddCandidate">加入名单</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 保存手动转盘 -->
+  <view class="save-wheel-overlay {{showSaveWheelModal ? 'visible' : ''}}" bindtap="onCloseSaveWheel">
+    <view class="save-wheel-dialog {{showSaveWheelModal ? 'visible' : ''}}" catchtap="noop">
+      <text class="candidate-title">给这盘天意留名</text>
+      <input
+        class="candidate-input"
+        placeholder="比如：周五不想动名单"
+        value="{{wheelNameInput}}"
+        bindinput="onWheelNameInput"
+        focus="{{showSaveWheelModal}}"
+      />
+      <view class="candidate-actions">
+        <button class="candidate-cancel" bindtap="onCloseSaveWheel">容我再想</button>
+        <button class="candidate-confirm" bindtap="onConfirmSaveWheel">存入史册</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 已保存转盘 -->
+  <view class="saved-wheels-overlay {{showSavedWheelsModal ? 'visible' : ''}}" bindtap="onCloseSavedWheels">
+    <view class="saved-wheels-dialog {{showSavedWheelsModal ? 'visible' : ''}}" catchtap="noop">
+      <view class="saved-wheels-header">
+        <text class="candidate-title">往日种种</text>
+        <text class="saved-wheels-close" bindtap="onCloseSavedWheels">✕</text>
+      </view>
+      <view wx:if="{{savedWheels.length === 0}}" class="saved-wheels-empty">
+        <text>史书空白，先保存一个转盘。</text>
+      </view>
+      <scroll-view wx:else scroll-y class="saved-wheels-list">
+        <view
+          wx:for="{{savedWheels}}"
+          wx:key="id"
+          class="saved-wheel-item"
+          data-id="{{item.id}}"
+          bindtap="onLoadSavedWheel"
+        >
+          <view class="saved-wheel-summary">
+            <text class="saved-wheel-name">{{item.name}}</text>
+            <text class="saved-wheel-meta">{{item.items.length}} 个饭名</text>
+          </view>
+          <view class="saved-wheel-actions">
+            <button class="saved-wheel-action edit" data-id="{{item.id}}" catchtap="onOpenEditWheelItems">编辑</button>
+            <button class="saved-wheel-action rename" data-id="{{item.id}}" catchtap="onOpenRenameWheel">改名</button>
+            <button class="saved-wheel-action delete" data-id="{{item.id}}" catchtap="onDeleteSavedWheel">删除</button>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- 重命名保存转盘 -->
+  <view class="rename-wheel-overlay {{showRenameWheelModal ? 'visible' : ''}}" bindtap="onCloseRenameWheel">
+    <view class="rename-wheel-dialog {{showRenameWheelModal ? 'visible' : ''}}" catchtap="noop">
+      <text class="candidate-title">换个名号</text>
+      <input
+        class="candidate-input"
+        placeholder="新的转盘名"
+        value="{{renameWheelInput}}"
+        bindinput="onRenameWheelInput"
+        focus="{{showRenameWheelModal}}"
+      />
+      <view class="candidate-actions">
+        <button class="candidate-cancel" bindtap="onCloseRenameWheel">容我再想</button>
+        <button class="candidate-confirm" bindtap="onConfirmRenameWheel">改名</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 编辑保存转盘餐厅 -->
+  <view class="edit-wheel-items-overlay {{showEditWheelItemsModal ? 'visible' : ''}}" bindtap="onCloseEditWheelItems">
+    <view class="edit-wheel-items-dialog {{showEditWheelItemsModal ? 'visible' : ''}}" catchtap="noop">
+      <view class="saved-wheels-header">
+        <view>
+          <text class="candidate-title">修订菜单</text>
+          <text class="edit-wheel-subtitle">{{editingWheelName}}</text>
+        </view>
+        <text class="saved-wheels-close" bindtap="onCloseEditWheelItems">✕</text>
+      </view>
+
+      <scroll-view scroll-y class="edit-wheel-items-list">
+        <view
+          wx:for="{{editingWheelItems}}"
+          wx:key="id"
+          class="edit-wheel-item"
+        >
+          <text class="edit-wheel-item-name">{{item.title}}</text>
+          <button class="edit-wheel-item-remove" data-index="{{index}}" catchtap="onRemoveEditingWheelItem">删除</button>
+        </view>
+      </scroll-view>
+
+      <view class="edit-wheel-add-row">
+        <input
+          class="candidate-input edit-wheel-input"
+          placeholder="加一道想吃的"
+          value="{{editingWheelItemInput}}"
+          bindinput="onEditingWheelItemInput"
+        />
+        <button class="edit-wheel-add-button" bindtap="onAddEditingWheelItem">加入</button>
+      </view>
+
+      <view class="candidate-actions">
+        <button class="candidate-cancel" bindtap="onCloseEditWheelItems">容我再想</button>
+        <button class="candidate-confirm" bindtap="onConfirmEditWheelItems">保存修改</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 结果模态卡片 -->
+  <view class="modal-overlay {{showModal ? 'visible' : ''}}" bindtap="onCloseModal">
+    <view class="result-card {{showModal ? 'visible' : ''}}" catchtap="noop">
+      <view wx:if="{{showResultSeal}}" class="result-seal">饭</view>
+
+      <!-- 关闭按钮 -->
+      <view class="card-close" bindtap="onCloseModal">✕</view>
+
+      <!-- 餐厅名 -->
+      <view class="card-header">
+        <text class="card-emoji">天</text>
+        <view class="card-title-group">
+          <text class="card-kicker">说出吾名，吓汝一跳</text>
+          <text class="card-title">{{result.title}}</text>
+        </view>
+      </view>
+
+      <!-- 详情信息行 -->
+      <view wx:if="{{result.source !== 'manual'}}" class="result-commentary">
+        <text>今日天意：优势在胃。</text>
+      </view>
+      <view wx:if="{{result.source === 'manual'}}" class="result-commentary">
+        <text>名单里杀出来的，多少有点天意。</text>
+      </view>
+
+      <view wx:if="{{result.source !== 'manual'}}" class="card-details">
+        <view wx:if="{{result.source !== 'manual'}}" class="detail-row">
+          <text class="detail-label">评分</text>
+          <text class="detail-value star">⭐ {{result.biz_ext && result.biz_ext.rating ? result.biz_ext.rating : '暂无'}}</text>
+        </view>
+        <view wx:if="{{result.source !== 'manual'}}" class="detail-row">
+          <text class="detail-label">人均</text>
+          <text class="detail-value cost">💰 {{result.biz_ext && result.biz_ext.cost ? '¥' + result.biz_ext.cost + '/人' : '暂无'}}</text>
+        </view>
+        <view wx:if="{{result.source !== 'manual'}}" class="detail-row">
+          <text class="detail-label">距离</text>
+          <text class="detail-value distance">📍 {{result.distance ? result.distance + 'm' : '未知'}}</text>
+        </view>
+        <view wx:if="{{result.category && result.source !== 'manual'}}" class="detail-row">
+          <text class="detail-label">类型</text>
+          <text class="detail-value category">🏷 {{result.category}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="card-actions">
+        <button wx:if="{{result.location}}" class="nav-button" bindtap="onNavigate">
+          就吃这家
+        </button>
+        <button class="again-button" bindtap="onSpinAgain">
+          接着抽
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 赞赏码 -->
+  <view class="reward-overlay {{showRewardModal ? 'visible' : ''}}" bindtap="onCloseReward">
+    <view class="reward-dialog {{showRewardModal ? 'visible' : ''}}" catchtap="noop">
+      <view class="saved-wheels-header">
+        <text class="candidate-title">赏些银两</text>
+        <text class="saved-wheels-close" bindtap="onCloseReward">✕</text>
+      </view>
+      <image
+        wx:if="{{!rewardCodeLoadFailed}}"
+        class="reward-code-image"
+        src="{{rewardCodeSrc}}"
+        mode="widthFix"
+        bindtap="onPreviewRewardCode"
+        binderror="onRewardCodeError"
+        show-menu-by-longpress="{{true}}"
+      ></image>
+      <view wx:else class="reward-placeholder">
+        <text>赞赏码尚未供上。</text>
+        <text>把图片放到 assets/images/reward-code.png 即可开坛。</text>
+      </view>
+      <text class="reward-hint">长按识别赞赏码，多少全凭江湖义气。</text>
+    </view>
+  </view>
+
+</view>
