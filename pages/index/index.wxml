@@ -13,8 +13,8 @@
       <text class="subtitle">是啊，吃什么？</text>
     </view>
     <view wx:if="{{appMode !== 'choice'}}" class="mode-back" bindtap="onBackToChoice">返回</view>
-    <view wx:if="{{appMode === 'nearby'}}" class="filter-icon" bindtap="onOpenFilter">
-      <text class="icon-text {{filterLabels.length > 0 ? 'active' : ''}}">天</text>
+    <view wx:if="{{appMode === 'nearby'}}" class="filter-icon {{nearbyHasFetched ? '' : 'disabled'}}" bindtap="{{nearbyHasFetched ? 'onOpenFilter' : ''}}">
+      <text class="icon-text {{filterLabels.length > 0 && nearbyHasFetched ? 'active' : ''}}">天</text>
       <view wx:if="{{filterLabels.length > 0}}" class="filter-dot"></view>
     </view>
   </view>

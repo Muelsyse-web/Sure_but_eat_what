@@ -160,6 +160,92 @@ function buildAvailableCuisineOptions(restaurants) {
   return options.slice(0, 20)
 }
 
+// ==================== 客户端筛选 ====================
+
+function getCostValue(item) {
+  const avgCost = item && item.avg_cost
+  if (avgCost != null && Number.isFinite(Number(avgCost))) return Number(avgCost)
+  const bizCost = item && item.biz_ext && item.biz_ext.cost
+  if (bizCost != null && Number.isFinite(Number(bizCost))) return Number(bizCost)
+  return null
+}
+
+function getRatingValue(item) {
+  const rating = item && item.biz_ext && item.biz_ext.rating
+  if (rating == null || String(rating).trim() === '') return null
+  const num = Number(rating)
+  return Number.isFinite(num) ? num : null
+}
+
+function matchCuisine(category, cuisine) {
+  if (!category || !cuisine) return true
+  if (cuisine === '不限' || cuisine === '全部') return true
+  const cat = String(category).toLowerCase()
+  const cuisineMap = {
+    '川菜': ['川菜', '四川', '成都', '麻辣', '火锅', '串串', '冒菜', '钵钵鸡'],
+    '粤菜': ['粤菜', '广东', '广州', '茶餐厅', '烧腊', '煲仔', '蒸点', '糖水'],
+    '日料': ['日本', '日式', '寿司', '刺身', '拉面', '居酒屋', '铁板烧', '鳗鱼'],
+    '西餐': ['西餐', '牛排', '披萨', '意面', '汉堡', '沙拉', '法餐', '意大利'],
+    '火锅': ['火锅', '涮', '锅底'],
+    '烧烤': ['烧烤', '烤肉', '烤串', 'BBQ'],
+    '小吃': ['小吃', '面', '粉', '饺', '包', '粥', '饼', '馄饨', '米线'],
+    '韩餐': ['韩国', '韩式', '烤肉', '拌饭', '炸鸡'],
+    '东南亚': ['泰国', '越南', '印度', '咖喱', '冬阴', '马来'],
+    '快餐': ['快餐', '麦当劳', '肯德基', '汉堡', '炸鸡']
+  }
+  const keywords = cuisineMap[cuisine] || [cuisine]
+  return keywords.some(kw => cat.includes(String(kw).toLowerCase()))
+}
+
+function restaurantMatchesCuisine(restaurant, cuisine) {
+  if (!cuisine || cuisine === '不限' || cuisine === '全部') return true
+  const target = String(cuisine).toLowerCase()
+  const tags = Array.isArray(restaurant.tags) ? restaurant.tags : []
+  if (tags.some(tag => String(tag).toLowerCase().includes(target) || target.includes(String(tag).toLowerCase()))) {
+    return true
+  }
+  return matchCuisine(restaurant.category, cuisine)
+}
+
+function applyClientFilters(restaurants, filters) {
+  const {
+    cuisines = [],
+    cost_min,
+    cost_max,
+    rating_min,
+    rating_max,
+    include_unrated = false,
+    include_uncosted = false,
+    distance_max
+  } = filters
+  const costMinActive = cost_min !== null && cost_min !== undefined
+  const costMaxActive = cost_max !== null && cost_max !== undefined
+  const ratingMinActive = rating_min !== null && rating_min !== undefined
+  const ratingMaxActive = rating_max !== null && rating_max !== undefined
+  const radius = distance_max != null ? distance_max : DEFAULT_RADIUS
+
+  return restaurants.filter(item => {
+    if (item.distance != null && Number(item.distance) > radius) return false
+    if (cuisines.length > 0 && !cuisines.some(cuisine => restaurantMatchesCuisine(item, cuisine))) return false
+
+    if (costMinActive || costMaxActive) {
+      const cost = getCostValue(item)
+      if (cost == null) return include_uncosted === true
+      if (costMinActive && cost < Number(cost_min)) return false
+      if (costMaxActive && cost > Number(cost_max)) return false
+    }
+
+    if (ratingMinActive || ratingMaxActive) {
+      const rating = getRatingValue(item)
+      if (rating == null) return include_unrated === true
+      if (ratingMinActive && rating < Number(rating_min)) return false
+      if (ratingMaxActive && rating > Number(rating_max)) return false
+    }
+
+    return true
+  })
+}
+
 function formatSlotItem(restaurant, index) {
   const isManual = restaurant.source === 'manual'
   const cost = restaurant.biz_ext && restaurant.biz_ext.cost ? `¥${restaurant.biz_ext.cost}/人` : '钱包生死不明'
@@ -185,6 +271,10 @@ function getEmojiForCategory(category) {
   if (category.includes('咖啡') || category.includes('茶')) return '☕'
   if (category.includes('甜') || category.includes('蛋糕')) return '🍰'
   return '🍽️'
+}
+
+function isSameRestaurant(a, b) {
+  return a && b && a.title === b.title
 }
 
 Page({
@@ -1165,12 +1255,27 @@ Page({
     }
 
     const count = restaurants.length
-    const prev = restaurants[(centerIndex - 1 + count) % count]
-    const current = restaurants[centerIndex % count]
-    const next = restaurants[(centerIndex + 1) % count]
+    const center = centerIndex % count
+    const current = restaurants[center]
+
+    let prevIndex = (center - 1 + count) % count
+    let nextIndex = (center + 1) % count
+
+    if (count > 2) {
+      let attempts = 0
+      while (isSameRestaurant(restaurants[prevIndex], current) && attempts < count) {
+        prevIndex = Math.floor(Math.random() * count)
+        attempts++
+      }
+      attempts = 0
+      while (isSameRestaurant(restaurants[nextIndex], current) && attempts < count) {
+        nextIndex = Math.floor(Math.random() * count)
+        attempts++
+      }
+    }
 
     this.setData({
-      slotItems: [prev, current, next].map(formatSlotItem),
+      slotItems: [restaurants[prevIndex], current, restaurants[nextIndex]].map(formatSlotItem),
       slotTransform: 'translateY(-64px)',
       slotAnimating: false
     })
@@ -1223,12 +1328,44 @@ Page({
     const randomCount = Math.max(28, Math.min(48, restaurants.length * 4))
 
     for (let i = 0; i < randomCount; i++) {
-      const randomRestaurant = restaurants[Math.floor(Math.random() * restaurants.length)]
-      spinItems.push(randomRestaurant)
+      let candidate
+      let attempts = 0
+      do {
+        candidate = restaurants[Math.floor(Math.random() * restaurants.length)]
+        attempts++
+      } while (
+        restaurants.length > 2 &&
+        i > 0 && isSameRestaurant(candidate, spinItems[i - 1]) &&
+        attempts < restaurants.length
+      )
+      spinItems.push(candidate)
+    }
+
+    // 确保最后一个随机项和 target 不相邻相同
+    if (restaurants.length > 2 && spinItems.length > 0 && isSameRestaurant(spinItems[spinItems.length - 1], targetRestaurant)) {
+      for (let j = 0; j < restaurants.length; j++) {
+        const alt = restaurants[Math.floor(Math.random() * restaurants.length)]
+        if (!isSameRestaurant(alt, targetRestaurant)) {
+          spinItems[spinItems.length - 1] = alt
+          break
+        }
+      }
     }
 
     spinItems.push(targetRestaurant)
-    spinItems.push(restaurants[(targetIndex + 1) % restaurants.length])
+
+    // 确保 target 后面的 next 不与 target 相同
+    let afterTarget = restaurants[(targetIndex + 1) % restaurants.length]
+    if (restaurants.length > 2 && isSameRestaurant(afterTarget, targetRestaurant)) {
+      for (let k = 0; k < restaurants.length; k++) {
+        const alt = restaurants[Math.floor(Math.random() * restaurants.length)]
+        if (!isSameRestaurant(alt, targetRestaurant)) {
+          afterTarget = alt
+          break
+        }
+      }
+    }
+    spinItems.push(afterTarget)
 
     const targetSlotIndex = spinItems.length - 2
     const finalOffset = (targetSlotIndex - 1) * SLOT_ITEM_HEIGHT
@@ -1418,6 +1555,19 @@ Page({
       labels.push(`偏向 ${cuisines.join('、')}`)
     }
 
+    const fullList = this.data.allNearbyRestaurants
+    const filtered = applyClientFilters(fullList, {
+      cuisines,
+      cost_min: costMin,
+      cost_max: costMax,
+      rating_min: ratingMin,
+      rating_max: ratingMax,
+      include_unrated: includeUnrated,
+      include_uncosted: includeUncosted,
+      distance_max: distanceMax
+    })
+    const restaurants = applyRestaurantBlacklist(filtered)
+
     this.setData({
       filters: {
         cost_min: costMin,
@@ -1438,23 +1588,20 @@ Page({
       includeUncosted,
       distanceMaxInput: distanceMax !== null ? String(distanceMax) : '',
       showFilterPanel: false,
-      allNearbyRestaurants: [],
-      restaurants: [],
-      restaurantCount: 0,
-      hasMissingCost: false,
-      hasMissingRating: false,
-      slotItems: [],
-      slotAnimating: false,
-      slotTransform: 'translateY(-64px)',
-      nearbyHasFetched: false
+      restaurants,
+      restaurantCount: restaurants.length
     })
-    this.showEasterEgg('天意已被干预，等你开坛')
+    this.buildSlotPreview(restaurants)
+    this.showEasterEgg('天意已被干预')
   },
 
   /**
    * 重置筛选条件
    */
   resetFilters() {
+    const fullList = this.data.allNearbyRestaurants
+    const restaurants = applyRestaurantBlacklist(fullList)
+
     this.setData({
       filters: {
         cost_min: null,
@@ -1468,8 +1615,7 @@ Page({
       },
       filterLabels: [],
       selectedCuisines: [],
-      cuisineTags: buildCuisineTags([], []),
-      availableCuisineOptions: [],
+      cuisineTags: buildCuisineTags([], this.data.availableCuisineOptions),
       costMinInput: '',
       costMaxInput: '',
       ratingMinInput: '',
@@ -1477,17 +1623,11 @@ Page({
       includeUnrated: false,
       includeUncosted: false,
       distanceMaxInput: '',
-      allNearbyRestaurants: [],
-      restaurants: [],
-      restaurantCount: 0,
-      hasMissingCost: false,
-      hasMissingRating: false,
-      slotItems: [],
-      slotAnimating: false,
-      slotTransform: 'translateY(-64px)',
-      nearbyHasFetched: false
+      restaurants,
+      restaurantCount: restaurants.length
     })
-    this.showEasterEgg('恢复天意，等你开坛')
+    this.buildSlotPreview(restaurants)
+    this.showEasterEgg('恢复天意')
   },
 
   // ==================== 结果模态卡片 ====================

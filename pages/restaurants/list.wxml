@@ -1,7 +1,7 @@
 <view class="page">
   <view class="header">
     <text class="title">全部饭局</text>
-    <text class="subtitle">黑名单照样留档，只是不进转盘。</text>
+
   </view>
 
   <view wx:if="{{restaurants.length === 0}}" class="empty-state">
@@ -46,7 +46,7 @@
         data-key="{{item.blacklistKey}}"
         bindtap="onToggleBlacklist"
       >
-        {{item.blacklisted ? '移出黑名单' : '加入黑名单'}}
+        {{item.blacklisted ? '枯木逢春' : '打入冷宫'}}
       </button>
     </view>
   </scroll-view>

@@ -127,6 +127,10 @@
   border: 1px solid rgba(143, 209, 203, 0.26);
 }
 
+.filter-icon.disabled {
+  opacity: 0.3;
+}
+
 .mode-back {
   height: 36px;
   padding: 0 14px;
