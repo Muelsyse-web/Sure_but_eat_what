@@ -135,9 +135,9 @@
   height: 36px;
   padding: 0 14px;
   border-radius: 18px;
-  background: rgba(201, 168, 76, 0.12);
-  color: #c9a84c;
-  border: 1px solid rgba(201, 168, 76, 0.2);
+  background: rgba(201, 168, 76, 0.22);
+  color: #8b6d3f;
+  border: 1px solid rgba(201, 168, 76, 0.38);
   font-size: 13px;
   line-height: 36px;
 }
