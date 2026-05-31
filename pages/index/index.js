@@ -1031,6 +1031,10 @@ Page({
       return
     }
 
+    // 切换到轮盘模式时清除旧 canvas 引用（wx:if 会重建 DOM）
+    this._manualCanvasNode = null
+    this._manualCanvasCtx = null
+
     this.setData(Object.assign(data, {
       slotItems: [],
       slotAnimating: false,
@@ -1038,7 +1042,7 @@ Page({
     }))
     setTimeout(() => {
       this._drawManualWheel(0)
-    }, 50)
+    }, 200)
   },
 
   syncNearbyCandidates(allNearbyRestaurants) {
@@ -1069,17 +1073,25 @@ Page({
       return
     }
 
-    const query = wx.createSelectorQuery()
-    query.select('#manualWheelCanvas')
-      .fields({ node: true, size: true })
-      .exec((res) => {
-        if (res[0] && res[0].node) {
-          this._manualCanvasNode = res[0].node
-          this._manualCanvasCtx = res[0].node.getContext('2d')
-          this._manualDpr = wx.getSystemInfoSync().pixelRatio
-        }
-        callback()
-      })
+    const acquire = (retry) => {
+      const query = wx.createSelectorQuery()
+      query.select('#manualWheelCanvas')
+        .fields({ node: true, size: true })
+        .exec((res) => {
+          if (res[0] && res[0].node) {
+            this._manualCanvasNode = res[0].node
+            this._manualCanvasCtx = res[0].node.getContext('2d')
+            this._manualDpr = wx.getSystemInfoSync().pixelRatio
+            callback()
+          } else if (retry) {
+            setTimeout(() => acquire(false), 200)
+          } else {
+            callback()
+          }
+        })
+    }
+
+    acquire(true)
   },
 
   _drawManualWheel(rotation) {
