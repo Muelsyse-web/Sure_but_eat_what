@@ -24,6 +24,14 @@
         "value": "assets/audio/bgm-guanyu.mp3"
       },
       {
+        "type": "file",
+        "value": "assets/audio/DontWantTable.mp3"
+      },
+      {
+        "type": "file",
+        "value": "assets/images/陈留大食堂封面.jpg"
+      },
+      {
         "type": "folder",
         "value": "Outside_resource"
       },

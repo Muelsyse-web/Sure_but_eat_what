@@ -23,6 +23,12 @@ assert(
 )
 
 assert(
+  ignored.some(item => item.type === 'file' && item.value === 'assets/audio/DontWantTable.mp3') &&
+    ignored.some(item => item.type === 'file' && item.value === 'assets/images/陈留大食堂封面.jpg'),
+  'unused collected audio and large image assets should stay out of the mini program package until referenced'
+)
+
+assert(
   /wheelSpin:\s*'\/assets\/audio\/wheel-spin\.mp3'/.test(pageJs) &&
     /slotSpin:\s*'\/assets\/audio\/slot-spin\.mp3'/.test(pageJs) &&
     /tap:\s*'\/assets\/audio\/tap\.mp3'/.test(pageJs),
