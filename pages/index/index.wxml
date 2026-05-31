@@ -75,11 +75,7 @@
         <text>{{filterLabels.length > 0 ? '天意已被干预' : '天意自由发挥'}}</text>
       </view>
       <view class="slot-window">
-        <view class="slot-barrage">
-          <text>优势在胃</text>
-          <text>是啊是啊</text>
-          <text>接着抽</text>
-        </view>
+
         <view class="slot-highlight"></view>
         <view
           class="slot-reel {{slotAnimating ? 'animating' : ''}}"

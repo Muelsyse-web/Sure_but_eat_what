@@ -448,15 +448,38 @@
 
 .slot-machine {
   width: 300px;
-  height: 260px;
   position: relative;
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(44, 36, 22, 0.07), rgba(44, 36, 22, 0.02)),
-    rgba(44, 36, 22, 0.76);
-  border: 1px solid rgba(201, 168, 76, 0.18);
-  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22);
-  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ede0c8 0%, #e8d8b8 50%, #d8c8a0 100%);
+  border: 2px solid rgba(122, 104, 72, 0.5);
+  box-shadow:
+    0 0 0 6px #4a3828,
+    0 0 0 10px #6b5240,
+    0 0 0 12px rgba(90, 74, 50, 0.3),
+    0 20px 56px rgba(0, 0, 0, 0.45);
+}
+
+.slot-machine::before,
+.slot-machine::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  right: -6px;
+  height: 28px;
+  border-radius: 14px;
+  z-index: 2;
+}
+
+.slot-machine::before {
+  top: -14px;
+  background: linear-gradient(180deg, #4a3828 0%, #6b5240 25%, #7a6848 50%, #5a4a32 75%, #4a3828 100%);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.1), inset 0 -2px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.slot-machine::after {
+  bottom: -14px;
+  background: linear-gradient(180deg, #4a3828 0%, #6b5240 25%, #7a6848 50%, #5a4a32 75%, #4a3828 100%);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.1), inset 0 -2px 3px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .slot-topline {
@@ -465,9 +488,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: rgba(201, 168, 76, 0.64);
+  color: #6b5240;
   font-size: 12px;
-  border-bottom: 1px solid rgba(201, 168, 76, 0.08);
+  border-bottom: 1px dashed rgba(122, 104, 72, 0.3);
 }
 
 .slot-window {
@@ -475,10 +498,18 @@
   height: 192px;
   margin: 14px 16px 16px;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 2px;
   background:
-    linear-gradient(90deg, rgba(196, 74, 58, 0.1), transparent 42%, rgba(168, 134, 74, 0.1)),
-    rgba(44, 36, 22, 0.32);
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 20px,
+      rgba(122, 104, 72, 0.03) 20px,
+      rgba(122, 104, 72, 0.03) 21px
+    ),
+    linear-gradient(180deg, #f2e8d4 0%, #ede0c8 50%, #e8d8b8 100%);
+  border-left: 3px solid rgba(122, 104, 72, 0.35);
+  border-right: 3px solid rgba(122, 104, 72, 0.35);
 }
 
 .slot-window::before,
@@ -494,31 +525,12 @@
 
 .slot-window::before {
   top: 0;
-  background: linear-gradient(180deg, rgba(44, 36, 22, 0.96), rgba(44, 36, 22, 0));
+  background: linear-gradient(180deg, rgba(237, 224, 200, 0.97), rgba(237, 224, 200, 0));
 }
 
 .slot-window::after {
   bottom: 0;
-  background: linear-gradient(0deg, rgba(44, 36, 22, 0.96), rgba(44, 36, 22, 0));
-}
-
-.slot-barrage {
-  position: absolute;
-  top: 10px;
-  left: 8px;
-  right: 8px;
-  z-index: 4;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.slot-barrage text {
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: rgba(201, 168, 76, 0.1);
-  color: rgba(201, 168, 76, 0.6);
-  font-size: 10px;
+  background: linear-gradient(0deg, rgba(237, 224, 200, 0.97), rgba(237, 224, 200, 0));
 }
 
 .slot-highlight {
@@ -527,10 +539,10 @@
   left: 8px;
   right: 8px;
   height: 64px;
-  border-radius: 10px;
-  border: 1px solid rgba(168, 134, 74, 0.72);
-  background: rgba(168, 134, 74, 0.1);
-  box-shadow: 0 0 0 1px rgba(196, 74, 58, 0.1), inset 0 0 18px rgba(168, 134, 74, 0.08);
+  border-radius: 6px;
+  border: 1.5px solid rgba(168, 134, 74, 0.55);
+  background: rgba(168, 134, 74, 0.07);
+  box-shadow: 0 0 0 2px rgba(196, 74, 58, 0.06), inset 0 0 20px rgba(168, 134, 74, 0.04);
   z-index: 1;
 }
 
@@ -548,8 +560,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 16px;
+  padding: 0 14px;
+  margin: 1px 8px;
   box-sizing: border-box;
+  background: linear-gradient(90deg, #dcd0b4 0%, #e8dcc4 10%, #f0e4d0 50%, #e8dcc4 90%, #dcd0b4 100%);
+  border-radius: 2px;
+  border: 1px solid rgba(90, 74, 50, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .slot-emoji {
@@ -567,7 +584,7 @@
 }
 
 .slot-name {
-  color: #f5efdf;
+  color: #2c2416;
   font-size: 16px;
   font-weight: bold;
   overflow: hidden;
@@ -576,7 +593,7 @@
 }
 
 .slot-meta {
-  color: rgba(168, 134, 74, 0.76);
+  color: #7a6848;
   font-size: 12px;
   margin-top: 4px;
   overflow: hidden;
@@ -596,20 +613,20 @@
   justify-content: center;
   padding: 0 20px;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(237, 224, 200, 0.55);
   text-align: center;
   z-index: 5;
 }
 
 .placeholder-title {
-  color: #c9a84c;
+  color: #7a6848;
   font-size: 18px;
   font-weight: 900;
 }
 
 .placeholder-copy {
   margin-top: 8px;
-  color: rgba(201, 168, 76, 0.58);
+  color: rgba(122, 104, 72, 0.65);
   font-size: 13px;
   line-height: 1.5;
 }
