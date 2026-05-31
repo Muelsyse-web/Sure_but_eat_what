@@ -321,6 +321,8 @@ Page({
     activeSavedWheelId: null,
     manualCandidates: [],
     savedWheels: [],
+    showManageCandidatesModal: false,
+    manageCandidatesInput: '',
     easterEggText: '',
     showResultSeal: false,
     showRewardModal: false,
@@ -494,6 +496,7 @@ Page({
       showSavedWheelsModal: false,
       showRenameWheelModal: false,
       showEditWheelItemsModal: false,
+      showManageCandidatesModal: false,
       spinning: false,
       slotItems: [],
       slotAnimating: false
@@ -542,6 +545,7 @@ Page({
       showSavedWheelsModal: false,
       showRenameWheelModal: false,
       showEditWheelItemsModal: false,
+      showManageCandidatesModal: false,
       showRewardModal: false
     })
   },
@@ -931,6 +935,68 @@ Page({
     }
 
     this.showEasterEgg('菜单已重修')
+  },
+
+  // ==================== 管理当前未保存名单 ====================
+
+  onOpenManageCandidates() {
+    this.playTapCue()
+    this.setData({
+      showManageCandidatesModal: true,
+      manageCandidatesInput: ''
+    })
+  },
+
+  onCloseManageCandidates() {
+    this.playTapCue()
+    this.setData({
+      showManageCandidatesModal: false,
+      manageCandidatesInput: ''
+    })
+  },
+
+  onManageCandidateInput(e) {
+    this.setData({ manageCandidatesInput: e.detail.value })
+  },
+
+  onRemoveCandidate(e) {
+    this.playTapCue()
+    const index = Number(e.currentTarget.dataset.index)
+    if (!Number.isInteger(index)) return
+
+    const manualCandidates = this.data.manualCandidates.filter((_, i) => i !== index)
+
+    this.setData({
+      manualCandidates,
+      activeSavedWheelId: null
+    })
+    this.syncManualCandidates(manualCandidates)
+  },
+
+  onAddCandidateInManage() {
+    this.playTapCue()
+    const title = String(this.data.manageCandidatesInput || '').trim()
+    if (!title) {
+      wx.showToast({
+        title: '先写一道菜',
+        icon: 'none'
+      })
+      return
+    }
+
+    const manualCandidates = this.data.manualCandidates.concat({
+      id: `manual-${Date.now()}-${this.data.manualCandidates.length}`,
+      title,
+      category: '自选',
+      source: 'manual'
+    })
+
+    this.setData({
+      manualCandidates,
+      manageCandidatesInput: '',
+      activeSavedWheelId: null
+    })
+    this.syncManualCandidates(manualCandidates)
   },
 
   syncManualCandidates(manualCandidates) {

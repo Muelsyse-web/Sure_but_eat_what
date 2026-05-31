@@ -317,6 +317,11 @@
   bottom: -16px;
 }
 
+.slot-save-button {
+  left: 0;
+  bottom: -16px;
+}
+
 .manual-wheel-actions {
   width: 300px;
   display: flex;
@@ -369,6 +374,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.manage-candidates-button {
+  background: linear-gradient(135deg, #5a4e42, #7a6e64);
 }
 
 .save-wheel-button::after,
@@ -1016,6 +1025,7 @@
 .saved-wheels-overlay,
 .rename-wheel-overlay,
 .edit-wheel-items-overlay,
+.manage-candidates-overlay,
 .reward-overlay {
   position: fixed;
   top: 0;
@@ -1036,6 +1046,7 @@
 .saved-wheels-overlay.visible,
 .rename-wheel-overlay.visible,
 .edit-wheel-items-overlay.visible,
+.manage-candidates-overlay.visible,
 .reward-overlay.visible {
   opacity: 1;
   pointer-events: auto;
@@ -1045,6 +1056,7 @@
 .saved-wheels-dialog,
 .rename-wheel-dialog,
 .edit-wheel-items-dialog,
+.manage-candidates-dialog,
 .reward-dialog {
   width: calc(100% - 48px);
   max-width: 360px;
@@ -1061,6 +1073,7 @@
 .saved-wheels-dialog.visible,
 .rename-wheel-dialog.visible,
 .edit-wheel-items-dialog.visible,
+.manage-candidates-dialog.visible,
 .reward-dialog.visible {
   transform: translateY(0);
 }

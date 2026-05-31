@@ -1,11 +1,5 @@
 <!-- 今天吃啥机 — 主页面 -->
-<view class="page">
-  <view class="ambient-barrage">
-    <text class="ambient-line line-a">吃什么？</text>
-    <text class="ambient-line line-b">是啊是啊</text>
-    <text class="ambient-line line-c">天意正在加载</text>
-  </view>
-
+<view class="page" bindtap="onPageTap">
   <!-- 标题区域 -->
   <view class="header">
     <view class="title-group">
@@ -55,7 +49,7 @@
         type="2d"
         id="manualWheelCanvas"
         class="manual-wheel-canvas"
-        hidden="{{showAddCandidateModal || showSaveWheelModal || showSavedWheelsModal || showRenameWheelModal || showEditWheelItemsModal || showModal}}"
+        hidden="{{showAddCandidateModal || showSaveWheelModal || showSavedWheelsModal || showRenameWheelModal || showEditWheelItemsModal || showManageCandidatesModal || showModal}}"
         style="width:300px;height:300px;"
       ></canvas>
     </view>
@@ -65,6 +59,7 @@
 
   <view wx:if="{{appMode === 'manual'}}" class="manual-wheel-actions">
     <button class="load-wheel-button" hover-class="button-press" bindtap="onOpenSavedWheels">往日种种，你当真不记得了吗？</button>
+    <button wx:if="{{manualCandidates.length > 0}}" class="load-wheel-button manage-candidates-button" hover-class="button-press" bindtap="onOpenManageCandidates">窥探全部天意</button>
   </view>
 
   <!-- 抽选区域 -->
@@ -89,6 +84,7 @@
             </view>
           </view>
         </view>
+        <view class="slot-glass"></view>
       </view>
 
       <!-- 无数据时的占位提示 -->
@@ -97,6 +93,7 @@
         <text class="placeholder-copy">{{appMode === 'manual' ? '先写几个想吃的，再让天意发挥' : (nearbyHasFetched ? '附近暂时没找到符合条件的饭局' : '点一下获取天意，再劳烦地图开口')}}</text>
       </view>
     </view>
+    <button wx:if="{{appMode === 'manual'}}" class="save-wheel-button wheel-save-button slot-save-button {{canSaveManualWheel ? '' : 'disabled'}}" bindtap="onOpenSaveWheel" disabled="{{!canSaveManualWheel}}" hover-class="button-press">保存</button>
     <button wx:if="{{appMode === 'manual'}}" class="add-candidate-button slot-add-button" hover-class="button-press" bindtap="onOpenAddCandidate">+</button>
   </view>
 
@@ -380,6 +377,45 @@
     </view>
   </view>
 
+  <!-- 管理当前未保存名单 -->
+  <view class="manage-candidates-overlay {{showManageCandidatesModal ? 'visible' : ''}}" bindtap="onCloseManageCandidates">
+    <view class="manage-candidates-dialog {{showManageCandidatesModal ? 'visible' : ''}}" catchtap="noop">
+      <view class="saved-wheels-header">
+        <text class="candidate-title">窥探全部天意</text>
+        <text class="saved-wheels-close" hover-class="button-press-subtle" bindtap="onCloseManageCandidates">✕</text>
+      </view>
+
+      <scroll-view wx:if="{{manualCandidates.length > 0}}" scroll-y class="edit-wheel-items-list">
+        <view
+          wx:for="{{manualCandidates}}"
+          wx:key="id"
+          class="edit-wheel-item"
+        >
+          <text class="edit-wheel-item-name">{{item.title}}</text>
+          <button class="edit-wheel-item-remove" hover-class="button-press-subtle" data-index="{{index}}" catchtap="onRemoveCandidate">删除</button>
+        </view>
+      </scroll-view>
+
+      <view wx:if="{{manualCandidates.length === 0}}" class="saved-wheels-empty">
+        <text>席上无人，先加几道菜。</text>
+      </view>
+
+      <view class="edit-wheel-add-row">
+        <input
+          class="candidate-input edit-wheel-input"
+          placeholder="再加一道"
+          value="{{manageCandidatesInput}}"
+          bindinput="onManageCandidateInput"
+        />
+        <button class="edit-wheel-add-button" hover-class="button-press-subtle" bindtap="onAddCandidateInManage">加入</button>
+      </view>
+
+      <view class="candidate-actions">
+        <button class="candidate-cancel" hover-class="button-press-subtle" bindtap="onCloseManageCandidates">成了</button>
+      </view>
+    </view>
+  </view>
+
   <!-- 结果模态卡片 -->
   <view class="modal-overlay {{showModal ? 'visible' : ''}}" bindtap="onCloseModal">
     <view class="result-card {{showModal ? 'visible' : ''}}" catchtap="noop">
@@ -430,7 +466,7 @@
           就吃这家
         </button>
         <button class="again-button" hover-class="button-press-subtle" bindtap="onSpinAgain">
-          接着抽
+          接着奏乐，接着舞
         </button>
       </view>
     </view>
