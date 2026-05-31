@@ -13,6 +13,7 @@ const SLOT_ITEM_HEIGHT = 64
 const MANUAL_WHEEL_SPIN_DURATION = 8300
 const SLOT_SPIN_DURATION = 4460
 const SLOT_RESULT_REVEAL_DELAY = 4560
+const DONT_WANT_TABLE_DELAY = 4056
 const DEFAULT_RADIUS = 1000
 const MIN_RADIUS = 10
 const MAX_RADIUS = 1000
@@ -25,7 +26,18 @@ const AUDIO_CLIPS = {
   wheelSpin: '/assets/audio/wheel-spin.mp3',
   slotSpin: '/assets/audio/slot-spin.mp3',
   tap: '/assets/audio/tap.mp3',
+  nameReveal: '/assets/audio/OnceSayMyNameITMXIASINI.mp3',
+  dontWantTable: '/assets/audio/DontWantTable.mp3',
+  suicide: '/assets/audio/Suicide.mp3',
   result: null
+}
+const AUDIO_VOLUMES = {
+  wheelSpin: 1,
+  slotSpin: 1,
+  tap: 1,
+  nameReveal: 1,
+  dontWantTable: 1,
+  suicide: 0.2
 }
 
 // 餐厅类型对应 emoji
@@ -289,7 +301,7 @@ Page({
     // 抽选状态
     spinning: false,
     slotItems: [],
-    slotTransform: 'translateY(-64px)',
+    slotTransform: 'translateY(0px)',
     slotAnimating: false,
     manualPickerType: 'wheel',
     showAddCandidateModal: false,
@@ -376,7 +388,28 @@ Page({
     }
   },
 
+  notifyAppUserGesture() {
+    if (typeof getApp !== 'function') return
+
+    const app = getApp()
+    if (app && typeof app.notifyUserGesture === 'function') {
+      app.notifyUserGesture()
+    }
+  },
+
+  onPageTap() {
+    this.notifyAppUserGesture()
+  },
+
+  getAudioVolume(cue) {
+    const volume = AUDIO_VOLUMES[cue]
+    if (volume == null) return 1
+    return Math.max(0, Math.min(1, volume))
+  },
+
   playAudioCue(cue) {
+    this.notifyAppUserGesture()
+
     if (!wx.createInnerAudioContext || !AUDIO_CLIPS[cue]) return
 
     if (!this._audioContexts) {
@@ -386,6 +419,7 @@ Page({
     if (!this._audioContexts[cue]) {
       const audio = wx.createInnerAudioContext()
       audio.src = AUDIO_CLIPS[cue]
+      audio.volume = this.getAudioVolume(cue)
       audio.obeyMuteSwitch = false
       audio.onError(() => {})
       this._audioContexts[cue] = audio
@@ -393,6 +427,7 @@ Page({
 
     const audio = this._audioContexts[cue]
     try {
+      audio.volume = this.getAudioVolume(cue)
       audio.stop()
       audio.seek(0)
       audio.play()
@@ -428,6 +463,19 @@ Page({
     this._resultSealTimer = setTimeout(() => {
       this.setData({ showResultSeal: false })
     }, 900)
+  },
+
+  showResultModal(restaurant) {
+    console.log('[SlotDebug] ===== showResultModal 弹窗打开 =====')
+    console.log('[SlotDebug] result.title:', restaurant && restaurant.title)
+    console.log('[SlotDebug] result.source:', restaurant && restaurant.source)
+    this.playAudioCue('nameReveal')
+    this.revealResultSeal()
+    this.setData({
+      spinning: false,
+      result: restaurant,
+      showModal: true
+    })
   },
 
   onChooseManual() {
@@ -467,7 +515,7 @@ Page({
       restaurantCount: 0,
       slotItems: [],
       slotAnimating: false,
-      slotTransform: 'translateY(-64px)',
+      slotTransform: 'translateY(0px)',
       loading: false,
       availableCuisineOptions: [],
       cuisineTags: buildCuisineTags([], []),
@@ -476,8 +524,7 @@ Page({
   },
 
   onBackToChoice() {
-    this.playTapCue()
-    this.playAudioCue('boot')
+    this.playAudioCue('suicide')
     clearTimeout(this._slotStartTimer)
     clearTimeout(this._slotFinishTimer)
     this.setData({
@@ -905,7 +952,7 @@ Page({
     this.setData(Object.assign(data, {
       slotItems: [],
       slotAnimating: false,
-      slotTransform: 'translateY(-64px)'
+      slotTransform: 'translateY(0px)'
     }))
     setTimeout(() => {
       this._drawManualWheel(0)
@@ -1290,7 +1337,7 @@ Page({
     if (!restaurants || restaurants.length === 0) {
       this.setData({
         slotItems: [],
-        slotTransform: 'translateY(-64px)',
+        slotTransform: 'translateY(0px)',
         slotAnimating: false
       })
       return
@@ -1318,7 +1365,7 @@ Page({
 
     this.setData({
       slotItems: [restaurants[prevIndex], current, restaurants[nextIndex]].map(formatSlotItem),
-      slotTransform: 'translateY(-64px)',
+      slotTransform: 'translateY(0px)',
       slotAnimating: false
     })
   },
@@ -1349,13 +1396,7 @@ Page({
         showModal: false
       })
       this._animateManualWheel(targetIndex, () => {
-        this.playAudioCue('result')
-        this.revealResultSeal()
-        this.setData({
-          spinning: false,
-          result: targetRestaurant,
-          showModal: true
-        })
+        this.showResultModal(targetRestaurant)
       })
       return
     }
@@ -1366,6 +1407,12 @@ Page({
     const restaurants = this.data.restaurants
     const targetIndex = Math.floor(Math.random() * restaurants.length)
     const targetRestaurant = restaurants[targetIndex]
+
+    console.log('[SlotDebug] ===== 老虎机抽选开始 =====')
+    console.log('[SlotDebug] restaurants.length:', restaurants.length)
+    console.log('[SlotDebug] targetIndex:', targetIndex)
+    console.log('[SlotDebug] targetRestaurant.name:', targetRestaurant.title)
+
     const spinItems = []
     const randomCount = Math.max(28, Math.min(48, restaurants.length * 4))
 
@@ -1409,8 +1456,25 @@ Page({
     }
     spinItems.push(afterTarget)
 
+    // target 在 spinItems 中的位置 = 倒数第二项（最后一项是 afterTarget）
     const targetSlotIndex = spinItems.length - 2
+    // 使 target 对齐到老虎机窗口中间高亮行（slot-window 第 2 行，top: 64px）
+    // translateY = -(targetSlotIndex - 1) * SLOT_ITEM_HEIGHT
+    // 验证：item[targetSlotIndex] 的视觉 top = targetSlotIndex*64 + translateY = 64 = 高亮行 top
     const finalOffset = (targetSlotIndex - 1) * SLOT_ITEM_HEIGHT
+
+    // 日志：验证视觉中心和最终结果的一致性
+    const visualCenterIndex = targetSlotIndex
+    const visualRestaurantAtCenter = spinItems[visualCenterIndex]
+    console.log('[SlotDebug] spinItems.length:', spinItems.length)
+    console.log('[SlotDebug] randomCount:', randomCount)
+    console.log('[SlotDebug] targetSlotIndex (visual center):', targetSlotIndex)
+    console.log('[SlotDebug] finalOffset:', finalOffset, 'px')
+    console.log('[SlotDebug] visualCenterIndex:', visualCenterIndex, '→ name:', visualRestaurantAtCenter.title)
+    console.log('[SlotDebug] targetIndex (映回 restaurants):', targetIndex, '→ name:', restaurants[targetIndex].title)
+    console.log('[SlotDebug] targetRestaurant === visualCenterRestaurant:', isSameRestaurant(targetRestaurant, visualRestaurantAtCenter))
+    console.log('[SlotDebug] selectedIndex:', targetIndex)
+    console.log('[SlotDebug] selectedRestaurant.name:', targetRestaurant.title)
 
     this.setData({
       spinning: true,
@@ -1428,13 +1492,7 @@ Page({
     }, 50)
 
     this._slotFinishTimer = setTimeout(() => {
-      this.playAudioCue('result')
-      this.revealResultSeal()
-      this.setData({
-        spinning: false,
-        result: targetRestaurant,
-        showModal: true
-      })
+      this.showResultModal(targetRestaurant)
     }, SLOT_RESULT_REVEAL_DELAY)
   },
 
@@ -1690,16 +1748,16 @@ Page({
   },
 
   /**
-   * 点击"再来一次"
+   * 点击"换一家"
    */
   onSpinAgain() {
+    this.playAudioCue('dontWantTable')
     this.setData({ showModal: false })
-    this.showEasterEgg('接着奏乐接着抽')
-    // 短暂延迟后再次旋转
+    this.showEasterEgg('换一家，接着奏乐')
     const that = this
     setTimeout(() => {
       that.onSpin()
-    }, 300)
+    }, DONT_WANT_TABLE_DELAY)
   },
 
   onOpenRestaurantList() {
