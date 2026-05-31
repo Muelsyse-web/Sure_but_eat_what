@@ -42,6 +42,13 @@ function isNumericCost(value) {
   return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value))
 }
 
+function normalizeTags(tag) {
+  return String(tag || '')
+    .split(/[,\uFF0C;\uFF1B\u3001|/]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
 function looksLikeRestaurant(name, category, typecode) {
   const text = `${name || ''} ${category || ''}`
   if (typecode && !String(typecode).startsWith('05')) return false
@@ -67,6 +74,7 @@ function normalizeAmapPoi(item) {
     title,
     address: item.address || '',
     category,
+    tags: normalizeTags(item.tag),
     typecode,
     location,
     distance: toNumber(item.distance),
@@ -116,17 +124,22 @@ function baiduMatchesRestaurant(restaurant, baiduItem) {
 function applyBaiduCost(restaurant, baiduItem) {
   if (!baiduMatchesRestaurant(restaurant, baiduItem)) return restaurant
   const price = baiduItem.detail_info && baiduItem.detail_info.price
-  if (!isNumericCost(price)) return restaurant
+  const rating = baiduItem.detail_info && baiduItem.detail_info.overall_rating
+  const hasNumericPrice = isNumericCost(price)
+  const currentBizExt = restaurant.biz_ext || {}
+  const canFillRating = currentBizExt.rating == null && rating != null && String(rating).trim() !== ''
+
+  if (!hasNumericPrice && !canFillRating) return restaurant
 
   return {
     ...restaurant,
     biz_ext: {
-      ...restaurant.biz_ext,
-      cost: String(price),
-      rating: restaurant.biz_ext.rating || baiduItem.detail_info.overall_rating || null
+      ...currentBizExt,
+      cost: hasNumericPrice ? String(price) : currentBizExt.cost || null,
+      rating: currentBizExt.rating || (canFillRating ? String(rating) : null)
     },
-    avg_cost: Number(price),
-    avg_cost_source: 'baidu',
+    avg_cost: hasNumericPrice ? Number(price) : restaurant.avg_cost,
+    avg_cost_source: hasNumericPrice ? 'baidu' : restaurant.avg_cost_source,
     data_sources: Array.from(new Set([...(restaurant.data_sources || []), 'baidu'])),
     provider_ids: {
       ...restaurant.provider_ids,
@@ -153,6 +166,7 @@ function normalizeTencentPoi(item) {
     title,
     address: item.address || '',
     category,
+    tags: [],
     location,
     distance: toNumber(item._distance || item.distance),
     biz_ext: {
@@ -202,6 +216,7 @@ module.exports = {
   normalizeName,
   normalizeAmapPoi,
   normalizeTencentPoi,
+  normalizeTags,
   applyBaiduCost,
   looksLikeRestaurant,
   dedupeRestaurants,

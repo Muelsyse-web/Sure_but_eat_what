@@ -13,6 +13,46 @@ function normalizeCuisines(cuisines, cuisine) {
   return raw.filter(item => item && item !== '不限' && item !== '全部')
 }
 
+function normalizeOptionName(name) {
+  return String(name || '').trim()
+}
+
+function extractCategoryLeaf(category) {
+  const parts = String(category || '')
+    .split(/[;\uFF1B]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+  const leaf = parts[parts.length - 1] || ''
+  return leaf
+    .replace(/[（(].*?[）)]/g, '')
+    .replace(/餐厅|中餐厅|小吃快餐店|快餐厅|餐饮服务/g, '')
+    .trim()
+}
+
+function buildAvailableCuisineOptions(restaurants) {
+  const options = []
+  const seen = new Set()
+
+  function addOption(name, source) {
+    const normalized = normalizeOptionName(name)
+    if (!normalized || normalized === '不限' || seen.has(normalized)) return
+    seen.add(normalized)
+    options.push({ name: normalized, source })
+  }
+
+  for (const restaurant of Array.isArray(restaurants) ? restaurants : []) {
+    ;(restaurant.tags || []).forEach(tag => addOption(tag, 'tag'))
+  }
+
+  for (const restaurant of Array.isArray(restaurants) ? restaurants : []) {
+    if (!Array.isArray(restaurant.tags) || restaurant.tags.length === 0) {
+      addOption(extractCategoryLeaf(restaurant.category), 'category')
+    }
+  }
+
+  return options.slice(0, 20)
+}
+
 function normalizeRadius(radius) {
   const num = Number(radius)
   if (!Number.isFinite(num)) return 1000
@@ -22,6 +62,48 @@ function normalizeRadius(radius) {
 function hasCostFilter(costMin, costMax) {
   return costMin !== null && costMin !== undefined ||
          costMax !== null && costMax !== undefined
+}
+
+function hasRatingFilter(ratingMin, ratingMax) {
+  return ratingMin !== null && ratingMin !== undefined ||
+         ratingMax !== null && ratingMax !== undefined
+}
+
+function getCostValue(item) {
+  const avgCost = item && item.avg_cost
+  if (avgCost != null && Number.isFinite(Number(avgCost))) return Number(avgCost)
+
+  const bizCost = item && item.biz_ext && item.biz_ext.cost
+  if (bizCost != null && Number.isFinite(Number(bizCost))) return Number(bizCost)
+
+  return null
+}
+
+function getRatingValue(item) {
+  const rating = item && item.biz_ext && item.biz_ext.rating
+  if (rating == null || String(rating).trim() === '') return null
+
+  const num = Number(rating)
+  return Number.isFinite(num) ? num : null
+}
+
+function normalizeRatingValue(value) {
+  if (value === null || value === undefined || value === '') return null
+  const num = Number(value)
+  if (!Number.isFinite(num)) return null
+  return Math.min(5, Math.max(0, num))
+}
+
+function normalizeRatingRange(ratingMin, ratingMax) {
+  const normalizedMin = normalizeRatingValue(ratingMin)
+  const normalizedMax = ratingMax === null || ratingMax === undefined || ratingMax === ''
+    ? (normalizedMin !== null ? 5 : null)
+    : normalizeRatingValue(ratingMax)
+
+  return {
+    rating_min: normalizedMin,
+    rating_max: normalizedMax
+  }
 }
 
 function matchCuisine(category, cuisine) {
@@ -46,18 +128,48 @@ function matchCuisine(category, cuisine) {
   return keywords.some(kw => cat.includes(String(kw).toLowerCase()))
 }
 
-function applyFilters(restaurants, { cuisineList, cost_min, cost_max, radius }) {
+function restaurantMatchesCuisine(restaurant, cuisine) {
+  if (!cuisine || cuisine === '不限' || cuisine === '全部') return true
+  const target = String(cuisine).toLowerCase()
+  const tags = Array.isArray(restaurant.tags) ? restaurant.tags : []
+  if (tags.some(tag => String(tag).toLowerCase().includes(target) || target.includes(String(tag).toLowerCase()))) {
+    return true
+  }
+  return matchCuisine(restaurant.category, cuisine)
+}
+
+function applyFilters(restaurants, {
+  cuisineList,
+  cost_min,
+  cost_max,
+  rating_min,
+  rating_max,
+  include_unrated,
+  include_uncosted,
+  radius
+}) {
   const costMinActive = cost_min !== null && cost_min !== undefined
   const costMaxActive = cost_max !== null && cost_max !== undefined
+  const ratingRange = normalizeRatingRange(rating_min, rating_max)
+  const ratingMinActive = ratingRange.rating_min !== null
+  const ratingMaxActive = ratingRange.rating_max !== null
 
   return restaurants.filter(item => {
     if (item.distance != null && Number(item.distance) > radius) return false
-    if (cuisineList.length > 0 && !cuisineList.some(cuisine => matchCuisine(item.category, cuisine))) return false
+    if (cuisineList.length > 0 && !cuisineList.some(cuisine => restaurantMatchesCuisine(item, cuisine))) return false
 
     if (costMinActive || costMaxActive) {
-      if (item.avg_cost == null || !Number.isFinite(Number(item.avg_cost))) return false
-      if (costMinActive && Number(item.avg_cost) < Number(cost_min)) return false
-      if (costMaxActive && Number(item.avg_cost) > Number(cost_max)) return false
+      const cost = getCostValue(item)
+      if (cost == null) return include_uncosted === true
+      if (costMinActive && cost < Number(cost_min)) return false
+      if (costMaxActive && cost > Number(cost_max)) return false
+    }
+
+    if (ratingMinActive || ratingMaxActive) {
+      const rating = getRatingValue(item)
+      if (rating == null) return include_unrated === true
+      if (ratingMinActive && rating < ratingRange.rating_min) return false
+      if (ratingMaxActive && rating > ratingRange.rating_max) return false
     }
 
     return true
@@ -79,6 +191,10 @@ exports.main = async (event) => {
     radius = 1000,
     cost_min = null,
     cost_max = null,
+    rating_min = null,
+    rating_max = null,
+    include_unrated = false,
+    include_uncosted = false,
     cuisine = null,
     cuisines = [],
     distance_max = null
@@ -151,10 +267,16 @@ exports.main = async (event) => {
       }
     }
 
-    const filtered = applyFilters(dedupeRestaurants(restaurants), {
+    const dedupedRestaurants = dedupeRestaurants(restaurants)
+    const availableCuisines = buildAvailableCuisineOptions(dedupedRestaurants)
+    const filtered = applyFilters(dedupedRestaurants, {
       cuisineList,
       cost_min,
       cost_max,
+      rating_min,
+      rating_max,
+      include_unrated,
+      include_uncosted,
       radius: searchRadius
     }).slice(0, 50)
 
@@ -162,8 +284,10 @@ exports.main = async (event) => {
       success: true,
       data: filtered,
       total: filtered.length,
+      availableCuisines,
       providerSummary,
       costFilterRequiresPrice: hasCostFilter(cost_min, cost_max),
+      ratingFilterRequiresRating: hasRatingFilter(rating_min, rating_max),
       message: filtered.length === 0 ? '附近暂无符合条件的餐厅' : `找到 ${filtered.length} 家餐厅`
     }
   } catch (err) {
@@ -174,4 +298,10 @@ exports.main = async (event) => {
       providerSummary
     }
   }
+}
+
+exports._test = {
+  applyFilters,
+  normalizeRatingRange,
+  buildAvailableCuisineOptions
 }

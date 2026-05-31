@@ -259,9 +259,10 @@
 }
 
 .secondary-choice {
-  background: rgba(20, 32, 36, 0.78);
-  color: #f5ddaa;
-  border: 1px solid rgba(143, 209, 203, 0.28);
+  background: linear-gradient(135deg, #267c7a, #4fb3a8);
+  color: #fff7df;
+  border: 1px solid rgba(143, 209, 203, 0.36);
+  box-shadow: inset 0 0 0 1px rgba(245, 221, 170, 0.08), 0 8px 22px rgba(79, 179, 168, 0.22);
 }
 
 .choice-hint {
@@ -398,7 +399,6 @@
   z-index: 2;
 }
 
-.save-wheel-button,
 .load-wheel-button {
   width: 100%;
   border: none;
@@ -410,18 +410,32 @@
 }
 
 .save-wheel-button {
-  height: 44px;
-  background: linear-gradient(135deg, #267c7a, #3d6a58);
-  font-size: 15px;
-  line-height: 44px;
+  position: absolute;
+  left: -4px;
+  bottom: 10px;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #b83d45, #d99b50);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 54px;
+  box-shadow: 0 6px 18px rgba(196, 154, 90, 0.32);
+}
+
+.wheel-save-button.disabled {
+  background: linear-gradient(135deg, #4b4b52, #2c2c32);
+  color: rgba(245, 221, 170, 0.48);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 .load-wheel-button {
   min-height: 48px;
   padding: 0 14px;
-  background: rgba(20, 32, 36, 0.86);
-  border: 1px solid rgba(143, 209, 203, 0.28);
-  color: #f5ddaa;
+  background: linear-gradient(135deg, #267c7a, #3d6a58);
   font-size: 13px;
   line-height: 1.35;
   display: flex;
@@ -655,6 +669,24 @@
   border: none;
 }
 
+.restaurant-list-button {
+  width: 268px;
+  height: 40px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #8fd1cb, #f5ddaa);
+  border: 1px solid rgba(245, 221, 170, 0.48);
+  color: #241915;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 40px;
+  box-shadow: 0 5px 16px rgba(143, 209, 203, 0.18), 0 8px 18px rgba(196, 154, 90, 0.18);
+}
+
+.restaurant-list-button::after {
+  border: none;
+}
+
 .spin-button.spinning {
   background: linear-gradient(135deg, #455b62, #7c6d56);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -780,6 +812,10 @@
   gap: 10px;
 }
 
+.rating-inputs {
+  margin-bottom: 10px;
+}
+
 .cost-input {
   flex: 1;
   height: 40px;
@@ -793,6 +829,46 @@
 .cost-separator {
   color: #8fd1cb;
   font-size: 16px;
+}
+
+.filter-toggle {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(143, 209, 203, 0.22);
+  background: rgba(20, 32, 36, 0.62);
+  color: rgba(245, 221, 170, 0.72);
+  font-size: 13px;
+}
+
+.filter-toggle.selected {
+  border-color: rgba(245, 221, 170, 0.45);
+  background: rgba(143, 209, 203, 0.16);
+  color: #fff7df;
+}
+
+.toggle-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(245, 221, 170, 0.42);
+  color: #241915;
+  background: rgba(255, 247, 223, 0.08);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.filter-toggle.selected .toggle-mark {
+  background: #f5ddaa;
+  border-color: #f5ddaa;
+}
+
+.toggle-copy {
+  flex: 1;
 }
 
 .distance-input-row {

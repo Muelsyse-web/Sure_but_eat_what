@@ -6,8 +6,8 @@
 // 缓存存储键名
 const CACHE_KEY = 'restaurantCache'
 
-// 数据源升级版本：v2 起缓存高德/百度归一化数据，忽略旧腾讯单源缓存
-const CACHE_VERSION = 2
+// 数据源升级版本：v3 起缓存高德 tag/动态菜品选项数据，忽略缺少 tags 的旧缓存
+const CACHE_VERSION = 3
 
 // 位置变化阈值（米），超出此距离需重新获取
 const DISTANCE_THRESHOLD = 200

@@ -1,7 +1,8 @@
 {
   "cloud": true,
   "pages": [
-    "pages/index/index"
+    "pages/index/index",
+    "pages/restaurants/list"
   ],
   "window": {
     "navigationBarTitleText": "今天吃啥机"

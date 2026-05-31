@@ -39,7 +39,7 @@ async function enrichMissingCostsWithBaidu({ key, restaurants }) {
   const enriched = restaurants.slice()
   const targets = restaurants
     .map((restaurant, index) => ({ restaurant, index }))
-    .filter(item => item.restaurant.avg_cost == null)
+    .filter(item => item.restaurant.avg_cost == null || item.restaurant.biz_ext == null || item.restaurant.biz_ext.rating == null)
     .slice(0, MAX_BAIDU_ENRICHMENT_COUNT)
 
   for (let i = 0; i < targets.length; i += BAIDU_BATCH_SIZE) {

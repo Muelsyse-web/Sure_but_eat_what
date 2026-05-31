@@ -22,3 +22,11 @@ assert(/bgm-guanyu\.mp3/.test(appJs), 'app should use the Guan Yu song copy as b
 assert(/ambient-barrage/.test(wxss), 'page should include a lightweight barrage backdrop layer')
 assert(/#120f13/.test(wxss) && /#8fd1cb/.test(wxss), 'theme should include the dark meme-stage palette with teal accent')
 assert(/choice-button/.test(wxss) && /letter-spacing:\s*0/.test(wxss), 'themed buttons should keep stable letter spacing')
+assert(
+  /\.secondary-choice\s*{[\s\S]*background:\s*linear-gradient\(135deg,\s*#267c7a,\s*#4fb3a8\)/.test(wxss),
+  'nearby entry button should use the brighter teal gradient'
+)
+assert(
+  !/\.secondary-choice\s*{[\s\S]*background:\s*rgba\(20,\s*32,\s*36,\s*0\.78\)/.test(wxss),
+  'nearby entry button should not keep the old dark background'
+)

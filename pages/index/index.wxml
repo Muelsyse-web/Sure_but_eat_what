@@ -59,11 +59,11 @@
         style="width:300px;height:300px;"
       ></canvas>
     </view>
+    <button class="save-wheel-button wheel-save-button {{canSaveManualWheel ? '' : 'disabled'}}" bindtap="onOpenSaveWheel" disabled="{{!canSaveManualWheel}}">保存</button>
     <button class="add-candidate-button" bindtap="onOpenAddCandidate">+</button>
   </view>
 
   <view wx:if="{{appMode === 'manual'}}" class="manual-wheel-actions">
-    <button class="save-wheel-button" bindtap="onOpenSaveWheel">保存转盘</button>
     <button class="load-wheel-button" bindtap="onOpenSavedWheels">往日种种，你当真不记得了吗？</button>
   </view>
 
@@ -115,6 +115,14 @@
       {{loading ? '天意正在搜索' : '获取天意'}}
     </button>
     <button
+      wx:if="{{appMode === 'nearby' && nearbyHasFetched && allNearbyRestaurants.length > 0}}"
+      class="restaurant-list-button"
+      bindtap="onOpenRestaurantList"
+      disabled="{{loading || spinning}}"
+    >
+      窥探全部天意
+    </button>
+    <button
       class="spin-button {{spinning ? 'spinning' : ''}} {{restaurantCount === 0 ? 'disabled' : ''}}"
       bindtap="onSpin"
       disabled="{{spinning || restaurantCount === 0 || loading}}"
@@ -144,6 +152,7 @@
       <!-- 菜系选择 -->
       <view class="filter-section">
         <text class="filter-section-title">天意偏向哪一口</text>
+        <text wx:if="{{availableCuisineOptions.length === 0}}" class="filter-hint">先获取天意，再看附近口味。</text>
         <scroll-view scroll-x class="cuisine-scroll">
           <view class="cuisine-list">
             <view
@@ -178,6 +187,44 @@
             value="{{costMaxInput}}"
             bindinput="onCostMaxInput"
           />
+        </view>
+        <view
+          wx:if="{{hasMissingCost}}"
+          class="filter-toggle {{includeUncosted ? 'selected' : ''}}"
+          bindtap="onToggleIncludeUncosted"
+        >
+          <text class="toggle-mark">{{includeUncosted ? '✓' : ''}}</text>
+          <text class="toggle-copy">无价也入席</text>
+        </view>
+      </view>
+
+      <!-- 星级筛选 -->
+      <view class="filter-section">
+        <text class="filter-section-title">星象几分照胃</text>
+        <view class="cost-inputs rating-inputs">
+          <input
+            class="cost-input rating-input"
+            type="digit"
+            placeholder="最低 0"
+            value="{{ratingMinInput}}"
+            bindinput="onRatingMinInput"
+          />
+          <text class="cost-separator">—</text>
+          <input
+            class="cost-input rating-input"
+            type="digit"
+            placeholder="最高默认 5"
+            value="{{ratingMaxInput}}"
+            bindinput="onRatingMaxInput"
+          />
+        </view>
+        <view
+          wx:if="{{hasMissingRating}}"
+          class="filter-toggle {{includeUnrated ? 'selected' : ''}}"
+          bindtap="onToggleIncludeUnrated"
+        >
+          <text class="toggle-mark">{{includeUnrated ? '✓' : ''}}</text>
+          <text class="toggle-copy">无星也入席</text>
         </view>
       </view>
 

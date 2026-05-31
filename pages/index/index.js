@@ -1,5 +1,6 @@
 // 引入缓存工具模块
 const { getCachedRestaurants, setCachedRestaurants } = require('../../utils/cache')
+const { applyRestaurantBlacklist } = require('../../utils/restaurantBlacklist')
 const {
   getSavedManualWheels,
   saveManualWheel,
@@ -8,12 +9,12 @@ const {
   updateManualWheelItems
 } = require('../../utils/manualWheels')
 
-// 菜系选项列表
-const CUISINE_OPTIONS = ['不限', '川菜', '粤菜', '日料', '西餐', '火锅', '烧烤', '小吃', '韩餐', '东南亚', '快餐']
 const SLOT_ITEM_HEIGHT = 64
 const DEFAULT_RADIUS = 1000
 const MIN_RADIUS = 10
 const MAX_RADIUS = 1000
+const NEARBY_RESTAURANT_LIST_STORAGE_KEY = 'nearbyRestaurantList'
+const INVALID_FILTER_MESSAGE = '输的什么玩意儿，我看你是舍不得这张帅案吧！'
 const AUDIO_CLIPS = {
   boot: null,
   manual: null,
@@ -34,22 +35,129 @@ function normalizeCuisines(cuisines) {
   return raw.filter(item => item && item !== '不限' && item !== '全部')
 }
 
-function buildCuisineTags(selectedCuisines) {
+function buildCuisineTags(selectedCuisines, availableCuisineOptions = []) {
   const selected = normalizeCuisines(selectedCuisines)
-  return CUISINE_OPTIONS.map(name => ({
+  const names = ['不限'].concat(
+    (Array.isArray(availableCuisineOptions) ? availableCuisineOptions : [])
+      .map(item => typeof item === 'string' ? item : item.name)
+      .filter(Boolean)
+  )
+  return names.map(name => ({
     name,
     selected: name === '不限' ? selected.length === 0 : selected.includes(name)
   }))
 }
 
-function parseIntegerInput(value) {
+function parseOptionalIntegerInput(value) {
   const input = String(value == null ? '' : value).trim()
-  return /^\d+$/.test(input) ? Number(input) : null
+  if (input === '') return { valid: true, value: null }
+  if (!/^\d+$/.test(input)) return { valid: false, value: null }
+  return { valid: true, value: Number(input) }
+}
+
+function parseOptionalDecimalInput(value) {
+  const input = String(value == null ? '' : value).trim()
+  if (input === '') return { valid: true, value: null }
+  if (!/^\d+(\.\d+)?$/.test(input)) return { valid: false, value: null }
+  return { valid: true, value: Number(input) }
 }
 
 function normalizeRadius(radius) {
   if (radius === null) return null
   return Math.min(MAX_RADIUS, Math.max(MIN_RADIUS, radius))
+}
+
+function normalizeRatingValue(rating) {
+  if (rating === null) return null
+  return Math.min(5, Math.max(0, Number(rating)))
+}
+
+function normalizeRatingRange(min, max) {
+  const ratingMin = normalizeRatingValue(min)
+  const ratingMax = max === null && ratingMin !== null ? 5 : normalizeRatingValue(max)
+  return {
+    rating_min: ratingMin,
+    rating_max: ratingMax
+  }
+}
+
+function validateFilterInputs(values) {
+  const costMinInput = parseOptionalIntegerInput(values.costMinInput)
+  const costMaxInput = parseOptionalIntegerInput(values.costMaxInput)
+  const ratingMinInput = parseOptionalDecimalInput(values.ratingMinInput)
+  const ratingMaxInput = parseOptionalDecimalInput(values.ratingMaxInput)
+  const distanceInput = parseOptionalIntegerInput(values.distanceMaxInput)
+
+  if (!costMinInput.valid || !costMaxInput.valid || !ratingMinInput.valid || !ratingMaxInput.valid || !distanceInput.valid) {
+    return { valid: false }
+  }
+
+  const costMin = costMinInput.value
+  const costMax = costMaxInput.value
+  const ratingMin = ratingMinInput.value
+  const ratingMax = ratingMaxInput.value
+
+  if (costMax !== null && costMin !== null && costMax < costMin) return { valid: false }
+  if (ratingMin !== null && (ratingMin < 0 || ratingMin > 5)) return { valid: false }
+  if (ratingMax !== null && (ratingMax < 0 || ratingMax > 5)) return { valid: false }
+  if (ratingMax !== null && ratingMin !== null && ratingMax < ratingMin) return { valid: false }
+  if (distanceInput.value !== null && (distanceInput.value < MIN_RADIUS || distanceInput.value > MAX_RADIUS)) return { valid: false }
+
+  return {
+    valid: true,
+    costMin,
+    costMax,
+    ratingMin,
+    ratingMax,
+    distanceMax: distanceInput.value === null ? null : distanceInput.value
+  }
+}
+
+function hasKnownCost(restaurant) {
+  const avgCost = restaurant && restaurant.avg_cost
+  const bizCost = restaurant && restaurant.biz_ext && restaurant.biz_ext.cost
+  return Number.isFinite(Number(avgCost)) || Number.isFinite(Number(bizCost))
+}
+
+function hasKnownRating(restaurant) {
+  const rating = restaurant && restaurant.biz_ext && restaurant.biz_ext.rating
+  return rating != null && String(rating).trim() !== '' && Number.isFinite(Number(rating))
+}
+
+function extractCategoryLeaf(category) {
+  const parts = String(category || '')
+    .split(/[;\uFF1B]/)
+    .map(item => item.trim())
+    .filter(Boolean)
+  const leaf = parts[parts.length - 1] || ''
+  return leaf
+    .replace(/[（(].*?[）)]/g, '')
+    .replace(/餐厅|中餐厅|小吃快餐店|快餐厅|餐饮服务/g, '')
+    .trim()
+}
+
+function buildAvailableCuisineOptions(restaurants) {
+  const options = []
+  const seen = new Set()
+
+  function addOption(name, source) {
+    const normalized = String(name || '').trim()
+    if (!normalized || normalized === '不限' || seen.has(normalized)) return
+    seen.add(normalized)
+    options.push({ name: normalized, source })
+  }
+
+  const items = Array.isArray(restaurants) ? restaurants : []
+  items.forEach(item => {
+    ;(Array.isArray(item.tags) ? item.tags : []).forEach(tag => addOption(tag, 'tag'))
+  })
+  items.forEach(item => {
+    if (!Array.isArray(item.tags) || item.tags.length === 0) {
+      addOption(extractCategoryLeaf(item.category), 'category')
+    }
+  })
+
+  return options.slice(0, 20)
 }
 
 function formatSlotItem(restaurant, index) {
@@ -96,6 +204,7 @@ Page({
     showEditWheelItemsModal: false,
     candidateInput: '',
     wheelNameInput: '',
+    canSaveManualWheel: false,
     renameWheelInput: '',
     renamingWheelId: null,
     editingWheelId: null,
@@ -121,21 +230,33 @@ Page({
     filters: {
       cost_min: null,
       cost_max: null,
+      rating_min: null,
+      rating_max: null,
       cuisines: [],
-      distance_max: null
+      distance_max: null,
+      include_unrated: false,
+      include_uncosted: false
     },
     filterLabels: [], // 当前激活的筛选标签
 
     // 筛选面板状态
     showFilterPanel: false,
-    cuisineTags: buildCuisineTags([]),
+    cuisineTags: buildCuisineTags([], []),
+    availableCuisineOptions: [],
     selectedCuisines: [],
     costMinInput: '',
     costMaxInput: '',
+    ratingMinInput: '',
+    ratingMaxInput: '',
+    includeUnrated: false,
+    includeUncosted: false,
+    hasMissingCost: false,
+    hasMissingRating: false,
     distanceMaxInput: '',
 
     // 餐厅数据
-    restaurants: [], // 当前可用餐厅列表（来自缓存或云函数）
+    allNearbyRestaurants: [], // 当前附近搜索全集，保留 biz_ext.rating、biz_ext.cost、avg_cost、category、distance 给子页面
+    restaurants: [], // 当前可用餐厅列表（手动列表，或附近搜索中过滤黑名单后的转盘候选）
     restaurantCount: 0, // 可用餐厅数量
     nearbyHasFetched: false,
 
@@ -153,6 +274,12 @@ Page({
   _resultSealTimer: null,
 
   onLoad() {},
+
+  onShow() {
+    if (this.data.appMode === 'nearby' && this.data.allNearbyRestaurants.length > 0) {
+      this.syncNearbyCandidates(this.data.allNearbyRestaurants)
+    }
+  },
 
   playAudioCue(cue) {
     if (!wx.createInnerAudioContext || !AUDIO_CLIPS[cue]) return
@@ -225,12 +352,15 @@ Page({
       result: null,
       showModal: false,
       spinning: false,
+      allNearbyRestaurants: [],
       restaurants: [],
       restaurantCount: 0,
       slotItems: [],
       slotAnimating: false,
       slotTransform: 'translateY(-64px)',
       loading: false,
+      availableCuisineOptions: [],
+      cuisineTags: buildCuisineTags([], []),
       nearbyHasFetched: false
     })
   },
@@ -242,6 +372,11 @@ Page({
     this.setData({
       appMode: 'choice',
       spinning: false,
+      allNearbyRestaurants: [],
+      restaurants: [],
+      restaurantCount: 0,
+      availableCuisineOptions: [],
+      cuisineTags: buildCuisineTags([], []),
       showModal: false,
       showFilterPanel: false,
       showAddCandidateModal: false,
@@ -324,9 +459,9 @@ Page({
   },
 
   onOpenSaveWheel() {
-    if (this.data.manualCandidates.length === 0) {
+    if (!this.data.canSaveManualWheel) {
       wx.showToast({
-        title: '席上无人，存了也空',
+        title: this.data.manualCandidates.length === 0 ? '席上无人，存了也空' : '这盘已经入史册',
         icon: 'none'
       })
       return
@@ -371,6 +506,8 @@ Page({
     this.setData({
       showSaveWheelModal: false,
       wheelNameInput: '',
+      activeSavedWheelId: saved.id,
+      canSaveManualWheel: false,
       savedWheels: getSavedManualWheels()
     })
     this.showEasterEgg('转盘已入史册')
@@ -416,6 +553,7 @@ Page({
     this.setData({
       manualCandidates,
       activeSavedWheelId: wheel.id,
+      canSaveManualWheel: false,
       showSavedWheelsModal: false,
       result: null,
       showModal: false,
@@ -623,7 +761,8 @@ Page({
       restaurants: manualCandidates,
       restaurantCount: manualCandidates.length,
       manualPickerType,
-      spinning: false
+      spinning: false,
+      canSaveManualWheel: manualCandidates.length > 0 && this.data.activeSavedWheelId == null
     }
 
     if (manualPickerType === 'slot') {
@@ -640,6 +779,28 @@ Page({
     setTimeout(() => {
       this._drawManualWheel(0)
     }, 50)
+  },
+
+  syncNearbyCandidates(allNearbyRestaurants) {
+    const allItems = Array.isArray(allNearbyRestaurants) ? allNearbyRestaurants : []
+    const restaurants = applyRestaurantBlacklist(allItems)
+    const hasMissingCost = allItems.some(item => !hasKnownCost(item))
+    const hasMissingRating = allItems.some(item => !hasKnownRating(item))
+    const availableCuisineOptions = buildAvailableCuisineOptions(allItems)
+    const selectedCuisines = normalizeCuisines(this.data.filters.cuisines)
+
+    this.setData({
+      allNearbyRestaurants: allItems,
+      restaurants,
+      restaurantCount: restaurants.length,
+      hasMissingCost,
+      hasMissingRating,
+      availableCuisineOptions,
+      cuisineTags: buildCuisineTags(selectedCuisines, availableCuisineOptions),
+      loading: false
+    })
+    this.buildSlotPreview(restaurants)
+    return restaurants
   },
 
   _ensureManualCanvas(callback) {
@@ -843,6 +1004,8 @@ Page({
     // 检查是否有有效筛选条件（有筛选条件时不使用缓存，需重新请求）
     const hasFilters = filters.cost_min !== null ||
                        filters.cost_max !== null ||
+                       filters.rating_min !== null ||
+                       filters.rating_max !== null ||
                        cuisines.length > 0 ||
                        filters.distance_max !== null
 
@@ -854,12 +1017,7 @@ Page({
 
     if (cachedItems) {
       // 缓存命中
-      this.setData({
-        restaurants: cachedItems,
-        restaurantCount: cachedItems.length,
-        loading: false
-      })
-      this.buildSlotPreview(cachedItems)
+      this.syncNearbyCandidates(cachedItems)
       return
     }
 
@@ -873,6 +1031,10 @@ Page({
         radius,
         cost_min: filters.cost_min,
         cost_max: filters.cost_max,
+        rating_min: filters.rating_min,
+        rating_max: filters.rating_max,
+        include_unrated: filters.include_unrated,
+        include_uncosted: filters.include_uncosted,
         cuisines,
         distance_max: filters.distance_max
       },
@@ -916,20 +1078,26 @@ Page({
           setCachedRestaurants(lat, lng, restaurants)
         }
 
-        that.setData({
-          restaurants: restaurants,
-          restaurantCount: restaurants.length,
-          loading: false
-        })
+        const availableRestaurants = that.syncNearbyCandidates(restaurants)
+        if (Array.isArray(response.availableCuisines) && response.availableCuisines.length > 0) {
+          const selectedCuisines = normalizeCuisines(that.data.filters.cuisines)
+          that.setData({
+            availableCuisineOptions: response.availableCuisines,
+            cuisineTags: buildCuisineTags(selectedCuisines, response.availableCuisines)
+          })
+        }
 
         if (restaurants.length === 0) {
           wx.showToast({
             title: '天意沉默了，换个条件',
             icon: 'none'
           })
+        } else if (availableRestaurants.length === 0) {
+          wx.showToast({
+            title: '都被打入冷宫了',
+            icon: 'none'
+          })
         }
-
-        that.buildSlotPreview(restaurants)
       },
       fail(err) {
         console.error('云函数调用失败:', err)
@@ -1102,9 +1270,13 @@ Page({
     this.setData({
       showFilterPanel: true,
       selectedCuisines,
-      cuisineTags: buildCuisineTags(selectedCuisines),
+      cuisineTags: buildCuisineTags(selectedCuisines, this.data.availableCuisineOptions),
       costMinInput: filters.cost_min !== null ? String(filters.cost_min) : '',
       costMaxInput: filters.cost_max !== null ? String(filters.cost_max) : '',
+      ratingMinInput: filters.rating_min !== null ? String(filters.rating_min) : '',
+      ratingMaxInput: filters.rating_max !== null ? String(filters.rating_max) : '',
+      includeUnrated: !!filters.include_unrated,
+      includeUncosted: !!filters.include_uncosted,
       distanceMaxInput: filters.distance_max !== null ? String(filters.distance_max) : ''
     })
   },
@@ -1130,6 +1302,14 @@ Page({
 
   noop() {},
 
+  showInvalidFilterToast() {
+    wx.showToast({
+      title: INVALID_FILTER_MESSAGE,
+      icon: 'none',
+      duration: 2200
+    })
+  },
+
   /**
    * 选择/取消菜系。
    */
@@ -1147,7 +1327,7 @@ Page({
 
     this.setData({
       selectedCuisines,
-      cuisineTags: buildCuisineTags(selectedCuisines)
+      cuisineTags: buildCuisineTags(selectedCuisines, this.data.availableCuisineOptions)
     })
   },
 
@@ -1165,6 +1345,22 @@ Page({
     this.setData({ costMaxInput: e.detail.value })
   },
 
+  onRatingMinInput(e) {
+    this.setData({ ratingMinInput: e.detail.value })
+  },
+
+  onRatingMaxInput(e) {
+    this.setData({ ratingMaxInput: e.detail.value })
+  },
+
+  onToggleIncludeUncosted() {
+    this.setData({ includeUncosted: !this.data.includeUncosted })
+  },
+
+  onToggleIncludeUnrated() {
+    this.setData({ includeUnrated: !this.data.includeUnrated })
+  },
+
   /**
    * 最大距离输入
    */
@@ -1176,18 +1372,44 @@ Page({
    * 应用筛选条件
    */
   onApplyFilter() {
-    const costMin = parseIntegerInput(this.data.costMinInput)
-    const costMax = parseIntegerInput(this.data.costMaxInput)
-    const distanceInput = parseIntegerInput(this.data.distanceMaxInput)
-    const distanceMax = normalizeRadius(distanceInput)
+    const validation = validateFilterInputs({
+      costMinInput: this.data.costMinInput,
+      costMaxInput: this.data.costMaxInput,
+      ratingMinInput: this.data.ratingMinInput,
+      ratingMaxInput: this.data.ratingMaxInput,
+      distanceMaxInput: this.data.distanceMaxInput
+    })
+    if (!validation.valid) {
+      this.showInvalidFilterToast()
+      return
+    }
+
+    const costMin = validation.costMin
+    const costMax = validation.costMax
+    const ratingRange = normalizeRatingRange(validation.ratingMin, validation.ratingMax)
+    const ratingMin = ratingRange.rating_min
+    const ratingMax = ratingRange.rating_max
+    const distanceInput = { value: validation.distanceMax }
+    const distanceMax = distanceInput.value
     const cuisines = normalizeCuisines(this.data.selectedCuisines)
+    const hasCostFilter = costMin !== null || costMax !== null
+    const hasRatingFilter = ratingMin !== null || ratingMax !== null
+    const includeUncosted = hasCostFilter && this.data.includeUncosted
+    const includeUnrated = hasRatingFilter && this.data.includeUnrated
 
     // 构建筛选标签
     const labels = []
-    if (costMin !== null || costMax !== null) {
+    if (hasCostFilter) {
       const minStr = costMin !== null ? `¥${costMin}` : '¥0'
       const maxStr = costMax !== null ? `¥${costMax}` : '不限'
       labels.push(`钱包 ${minStr}-${maxStr}`)
+      if (includeUncosted) labels.push('含无价')
+    }
+    if (hasRatingFilter) {
+      const minStr = ratingMin !== null ? ratingMin : 0
+      const maxStr = ratingMax !== null ? ratingMax : 5
+      labels.push(`星级 ${minStr}-${maxStr}`)
+      if (includeUnrated) labels.push('含无星')
     }
     if (distanceMax !== null) {
       labels.push(`腿 ${distanceMax}m内`)
@@ -1197,14 +1419,30 @@ Page({
     }
 
     this.setData({
-      filters: { cost_min: costMin, cost_max: costMax, cuisines, distance_max: distanceMax },
+      filters: {
+        cost_min: costMin,
+        cost_max: costMax,
+        rating_min: ratingMin,
+        rating_max: ratingMax,
+        cuisines,
+        distance_max: distanceMax,
+        include_unrated: includeUnrated,
+        include_uncosted: includeUncosted
+      },
       filterLabels: labels,
       selectedCuisines: cuisines,
-      cuisineTags: buildCuisineTags(cuisines),
+      cuisineTags: buildCuisineTags(cuisines, this.data.availableCuisineOptions),
+      ratingMinInput: ratingMin !== null ? String(ratingMin) : '',
+      ratingMaxInput: ratingMax !== null && hasRatingFilter ? String(ratingMax) : '',
+      includeUnrated,
+      includeUncosted,
       distanceMaxInput: distanceMax !== null ? String(distanceMax) : '',
       showFilterPanel: false,
+      allNearbyRestaurants: [],
       restaurants: [],
       restaurantCount: 0,
+      hasMissingCost: false,
+      hasMissingRating: false,
       slotItems: [],
       slotAnimating: false,
       slotTransform: 'translateY(-64px)',
@@ -1218,15 +1456,32 @@ Page({
    */
   resetFilters() {
     this.setData({
-      filters: { cost_min: null, cost_max: null, cuisines: [], distance_max: null },
+      filters: {
+        cost_min: null,
+        cost_max: null,
+        rating_min: null,
+        rating_max: null,
+        cuisines: [],
+        distance_max: null,
+        include_unrated: false,
+        include_uncosted: false
+      },
       filterLabels: [],
       selectedCuisines: [],
-      cuisineTags: buildCuisineTags([]),
+      cuisineTags: buildCuisineTags([], []),
+      availableCuisineOptions: [],
       costMinInput: '',
       costMaxInput: '',
+      ratingMinInput: '',
+      ratingMaxInput: '',
+      includeUnrated: false,
+      includeUncosted: false,
       distanceMaxInput: '',
+      allNearbyRestaurants: [],
       restaurants: [],
       restaurantCount: 0,
+      hasMissingCost: false,
+      hasMissingRating: false,
       slotItems: [],
       slotAnimating: false,
       slotTransform: 'translateY(-64px)',
@@ -1255,6 +1510,15 @@ Page({
     setTimeout(() => {
       that.onSpin()
     }, 300)
+  },
+
+  onOpenRestaurantList() {
+    // Preserve the full restaurant objects for the child page:
+    // biz_ext.rating, biz_ext.cost, avg_cost, category, and distance stay intact.
+    wx.setStorageSync(NEARBY_RESTAURANT_LIST_STORAGE_KEY, this.data.allNearbyRestaurants)
+    wx.navigateTo({
+      url: '/pages/restaurants/list'
+    })
   },
 
   /**

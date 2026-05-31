@@ -25,8 +25,8 @@ assert(
 )
 
 assert(
-  /CACHE_VERSION\s*=\s*2/.test(cacheJs),
-  'restaurant cache should include a version bump so stale Tencent-only cache entries are ignored'
+  /CACHE_VERSION\s*=\s*3/.test(cacheJs),
+  'restaurant cache should include a version bump so stale entries without dynamic cuisine tags are ignored'
 )
 
 assert(fs.existsSync(normalizersPath), 'provider normalizers should live in a focused module')
@@ -51,6 +51,7 @@ const amapRestaurant = normalizers.normalizeAmapPoi({
 assert.strictEqual(amapRestaurant.title, '阿强川菜')
 assert.deepStrictEqual(amapRestaurant.location, { lat: 30.2741, lng: 120.1551 })
 assert.strictEqual(amapRestaurant.biz_ext.cost, '62')
+assert.deepStrictEqual(amapRestaurant.tags, [])
 assert.strictEqual(amapRestaurant.avg_cost, 62)
 assert.strictEqual(amapRestaurant.avg_cost_source, 'amap')
 assert.deepStrictEqual(amapRestaurant.data_sources, ['amap'])
@@ -78,6 +79,25 @@ assert.strictEqual(enriched.avg_cost, 68)
 assert.strictEqual(enriched.avg_cost_source, 'baidu')
 assert(enriched.data_sources.includes('baidu'))
 assert.strictEqual(enriched.provider_ids.baidu, 'baidu-1')
+
+const ratingOnlyCandidate = {
+  ...amapRestaurant,
+  biz_ext: {
+    ...amapRestaurant.biz_ext,
+    rating: null
+  }
+}
+const ratingEnriched = normalizers.applyBaiduCost(ratingOnlyCandidate, {
+  uid: 'baidu-rating',
+  name: '阿强川菜馆',
+  location: bdLocation,
+  detail_info: { type: 'cater', overall_rating: '4.8' }
+})
+
+assert.strictEqual(ratingEnriched.biz_ext.rating, '4.8')
+assert.strictEqual(ratingEnriched.biz_ext.cost, '62')
+assert.strictEqual(ratingEnriched.avg_cost, 62)
+assert.strictEqual(ratingEnriched.avg_cost_source, 'amap')
 
 const farBaiduLocation = geo.gcj02ToBd09(amapRestaurant.location.lat + 0.02, amapRestaurant.location.lng + 0.02)
 assert.strictEqual(
@@ -111,4 +131,9 @@ assert.strictEqual(deduped[0].source, 'amap', 'dedupe should prefer AMap over Te
 assert(
   /MAX_BAIDU_ENRICHMENT_COUNT/.test(baiduProviderJs) && /Promise\.allSettled/.test(baiduProviderJs),
   'Baidu enrichment should be capped and concurrency-safe instead of doing unbounded serial requests'
+)
+
+assert(
+  /avg_cost\s*==\s*null/.test(baiduProviderJs) && /biz_ext\.rating\s*==\s*null/.test(baiduProviderJs),
+  'Baidu enrichment should target restaurants missing either average cost or rating'
 )

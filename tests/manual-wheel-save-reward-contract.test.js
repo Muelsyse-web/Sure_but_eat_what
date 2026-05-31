@@ -26,9 +26,10 @@ assert(
 assert(
   /showSaveWheelModal:\s*false/.test(pageJs) &&
   /wheelNameInput:\s*''/.test(pageJs) &&
+  /canSaveManualWheel:\s*false/.test(pageJs) &&
   /showSavedWheelsModal:\s*false/.test(pageJs) &&
   /savedWheels:\s*\[\]/.test(pageJs),
-  'page state should include save/load modal state for manual wheels'
+  'page state should include save/load modal state and save eligibility for manual wheels'
 )
 
 assert(
@@ -40,9 +41,24 @@ assert(
 )
 
 assert(
-  /保存转盘/.test(pageWxml) &&
+  /class="save-wheel-button wheel-save-button[^"]*"\s+bindtap="onOpenSaveWheel"\s+disabled="\{\{!canSaveManualWheel\}\}"/.test(pageWxml) &&
+  />保存<\/button>/.test(pageWxml) &&
+  !/>保存转盘<\/button>/.test(pageWxml) &&
   /往日种种，你当真不记得了吗？/.test(pageWxml),
-  'manual mode should render save and load-wheel actions near the wheel'
+  'manual mode should render a circular save button and the load-wheel action'
+)
+
+assert(
+  /activeSavedWheelId:\s*null/.test(pageJs) &&
+  /activeSavedWheelId:\s*saved\.id/.test(pageJs) &&
+  /canSaveManualWheel:\s*false/.test(pageJs) &&
+  /activeSavedWheelId:\s*null[\s\S]*this\.syncManualCandidates\(manualCandidates\)/.test(pageJs),
+  'saving should mark the current wheel as saved, while adding a candidate should make it saveable again'
+)
+
+assert(
+  /if\s*\(!this\.data\.canSaveManualWheel\)/.test(pageJs),
+  'onOpenSaveWheel should guard unsaveable states instead of relying only on disabled UI'
 )
 
 assert(
@@ -72,6 +88,8 @@ assert(
 assert(
   /\.save-wheel-button::after/.test(pageWxss) &&
   /\.load-wheel-button::after/.test(pageWxss) &&
+  /\.wheel-save-button\.disabled/.test(pageWxss) &&
+  /\.load-wheel-button[\s\S]*background:\s*linear-gradient\(135deg,\s*#267c7a,\s*#3d6a58\)/.test(pageWxss) &&
   /\.reward-button::after/.test(pageWxss),
-  'new buttons should remove WeChat default pseudo borders'
+  'new buttons should remove WeChat default pseudo borders and expose enabled/disabled styling'
 )
