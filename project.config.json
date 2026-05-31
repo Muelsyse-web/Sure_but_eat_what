@@ -24,10 +24,6 @@
         "value": "assets/audio/bgm-guanyu.mp3"
       },
       {
-        "type": "file",
-        "value": "assets/audio/OnceSayMyNameITMXIASINI.mp3"
-      },
-      {
         "type": "folder",
         "value": "Outside_resource"
       },

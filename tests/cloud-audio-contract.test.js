@@ -17,6 +17,19 @@ assert(
 )
 
 assert(
+  /_backgroundMusicResolving/.test(appJs) &&
+    /fail:\s*\(err\)\s*=>\s*{[\s\S]*this\._backgroundMusicResolving\s*=\s*false/.test(appJs) &&
+    /if\s*\(!file\s*\|\|\s*file\.status\s*!==\s*0\s*\|\|\s*!file\.tempFileURL\)/.test(appJs) &&
+    /this\._backgroundMusicReady\s*=\s*true[\s\S]*this\._backgroundMusic\.src\s*=\s*file\.tempFileURL/.test(appJs),
+  'background music should retry CloudBase URL resolution unless a usable temp URL has been resolved'
+)
+
+assert(
+  /_backgroundMusic[\s\S]*obeyMuteSwitch\s*=\s*false/.test(appJs),
+  'background music should not be silenced by the hardware mute switch'
+)
+
+assert(
   !/BACKGROUND_MUSIC_SRC\s*=\s*'\/assets\/audio\/bgm-guanyu\.mp3'/.test(appJs),
   'background music should not reference the ignored local audio path'
 )

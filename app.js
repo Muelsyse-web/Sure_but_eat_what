@@ -22,28 +22,41 @@ App({
   },
 
   startBackgroundMusic: function () {
-    if (!wx.createInnerAudioContext || !BACKGROUND_MUSIC_FILE_ID) return
+    if (!wx.createInnerAudioContext || !wx.cloud || !wx.cloud.getTempFileURL || !BACKGROUND_MUSIC_FILE_ID) return
 
     if (!this._backgroundMusic) {
       const audio = wx.createInnerAudioContext()
       audio.loop = true
       audio.volume = 0.24
-      audio.obeyMuteSwitch = true
-      audio.onError(() => {})
+      audio.obeyMuteSwitch = false
+      audio.onError((err) => {
+        console.warn('背景音乐播放错误:', err)
+        this._backgroundMusicReady = false
+        this._backgroundMusicResolving = false
+      })
       this._backgroundMusic = audio
     }
 
     if (!this._backgroundMusicReady) {
-      this._backgroundMusicReady = true
+      if (this._backgroundMusicResolving) return
+      this._backgroundMusicResolving = true
       wx.cloud.getTempFileURL({
         fileList: [BACKGROUND_MUSIC_FILE_ID],
         success: (res) => {
           const file = res.fileList && res.fileList[0]
-          if (!file || !file.tempFileURL) return
+          this._backgroundMusicResolving = false
+          if (!file || file.status !== 0 || !file.tempFileURL) {
+            this._backgroundMusicReady = false
+            console.warn('背景音乐临时链接无效:', file)
+            return
+          }
+          this._backgroundMusicReady = true
           this._backgroundMusic.src = file.tempFileURL
           this.startBackgroundMusic()
         },
         fail: (err) => {
+          this._backgroundMusicResolving = false
+          this._backgroundMusicReady = false
           console.warn('背景音乐临时链接获取失败:', err)
         }
       })

@@ -6,6 +6,7 @@ const {
 
 const NEARBY_RESTAURANT_LIST_STORAGE_KEY = 'nearbyRestaurantList'
 const TAP_AUDIO_SRC = '/assets/audio/tap.mp3'
+const DETAIL_AUDIO_SRC = '/assets/audio/OnceSayMyNameITMXIASINI.mp3'
 
 function withBlacklistState(restaurants) {
   const blacklistKeys = new Set(getRestaurantBlacklist().map(item => item.key))
@@ -22,8 +23,10 @@ Page({
   },
 
   _tapAudio: null,
+  _detailAudio: null,
 
   onLoad() {
+    this.playDetailCue()
     this.refreshRestaurants()
   },
 
@@ -62,6 +65,27 @@ Page({
       this._tapAudio.play()
     } catch (err) {
       console.warn('播放音效失败: tap', err)
+    }
+  },
+
+  playDetailCue() {
+    if (!wx.createInnerAudioContext || !DETAIL_AUDIO_SRC) return
+
+    if (!this._detailAudio) {
+      const audio = wx.createInnerAudioContext()
+      audio.src = DETAIL_AUDIO_SRC
+      audio.loop = false
+      audio.obeyMuteSwitch = false
+      audio.onError(() => {})
+      this._detailAudio = audio
+    }
+
+    try {
+      this._detailAudio.stop()
+      this._detailAudio.seek(0)
+      this._detailAudio.play()
+    } catch (err) {
+      console.warn('播放音效失败: detail', err)
     }
   },
 
