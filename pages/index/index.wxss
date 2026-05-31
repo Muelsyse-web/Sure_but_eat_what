@@ -231,16 +231,6 @@
   text-shadow: 0 3px 0 rgba(196, 74, 58, 0.4), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
-.banquet-mark {
-  align-self: center;
-  padding: 6px 16px;
-  border: 1px solid rgba(168, 134, 74, 0.34);
-  border-radius: 999px;
-  color: #a8864a;
-  font-size: 13px;
-  background: rgba(44, 36, 22, 0.64);
-}
-
 .choice-button {
   width: 100%;
   height: 56px;
@@ -431,9 +421,9 @@
 }
 
 .wheel-save-button.disabled {
-  background: linear-gradient(135deg, #4b4b52, #2c2c32);
-  color: rgba(201, 168, 76, 0.48);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(135deg, #d9d5ce, #cfcbc4);
+  color: #b8b4ac;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .load-wheel-button {
@@ -697,9 +687,9 @@
 }
 
 .spin-button.disabled {
-  background: linear-gradient(135deg, #555, #444);
+  background: linear-gradient(135deg, #d9d5ce, #cfcbc4);
   box-shadow: none;
-  color: #888;
+  color: #b8b4ac;
 }
 
 .spin-button::after {

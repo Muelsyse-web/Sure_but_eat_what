@@ -35,7 +35,7 @@
       <text class="meme-question">吃什么？</text>
       <text class="meme-answer">是啊，吃什么？</text>
     </view>
-    <view class="banquet-mark">饭点精神状态检测中</view>
+
     <button class="choice-button primary-choice" bindtap="onChooseManual">我有饭局名单</button>
     <button class="choice-button secondary-choice" bindtap="onChooseNearby">附近有什么？</button>
     <text class="choice-hint">严肃决策，随机执行。</text>
