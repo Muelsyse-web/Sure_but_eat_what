@@ -264,7 +264,7 @@
 
 .secondary-choice {
   background: linear-gradient(135deg, #8b6d3f, #a8864a);
-  color: #2c2416;
+  color: #ffffff;
   border: 1px solid rgba(168, 134, 74, 0.36);
   box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.08), 0 8px 22px rgba(168, 134, 74, 0.22);
 }
@@ -285,7 +285,7 @@
   border-radius: 20px;
   border: none;
   background: rgba(44, 36, 22, 0.88);
-  color: #2c2416;
+  color: #f5efdf;
   font-size: 13px;
   line-height: 40px;
   box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.28), 0 8px 20px rgba(0, 0, 0, 0.24);
@@ -305,7 +305,7 @@
   border-radius: 999px;
   background: rgba(44, 36, 22, 0.78);
   border: 1px solid rgba(168, 134, 74, 0.36);
-  color: #2c2416;
+  color: #c9a84c;
   font-size: 13px;
   line-height: 1.4;
   animation: eggPulse 1.2s ease-out both;
@@ -532,8 +532,8 @@
 .slot-barrage text {
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(44, 36, 22, 0.08);
-  color: rgba(44, 36, 22, 0.52);
+  background: rgba(201, 168, 76, 0.1);
+  color: rgba(201, 168, 76, 0.6);
   font-size: 10px;
 }
 
@@ -583,7 +583,7 @@
 }
 
 .slot-name {
-  color: #2c2416;
+  color: #f5efdf;
   font-size: 16px;
   font-weight: bold;
   overflow: hidden;
@@ -618,7 +618,7 @@
 }
 
 .placeholder-title {
-  color: #2c2416;
+  color: #c9a84c;
   font-size: 18px;
   font-weight: 900;
 }
