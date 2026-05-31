@@ -609,6 +609,14 @@ Page({
       return
     }
 
+    if (this.data.manualCandidates.some(item => item.title === name)) {
+      wx.showToast({
+        title: '这饭名已经在名单里了',
+        icon: 'none'
+      })
+      return
+    }
+
     const manualCandidates = this.data.manualCandidates.concat({
       id: `manual-${Date.now()}-${this.data.manualCandidates.length}`,
       title: name,
@@ -979,6 +987,14 @@ Page({
     if (!title) {
       wx.showToast({
         title: '先写一道菜',
+        icon: 'none'
+      })
+      return
+    }
+
+    if (this.data.manualCandidates.some(item => item.title === title)) {
+      wx.showToast({
+        title: '这饭名已经在名单里了',
         icon: 'none'
       })
       return
