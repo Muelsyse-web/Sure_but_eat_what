@@ -298,12 +298,13 @@
   bottom: 10px;
   width: 54px;
   height: 54px;
+  padding: 0;
   border-radius: 50%;
   background: linear-gradient(135deg, #2c2416, #7a6e64);
   color: #ffffff;
   font-size: 30px;
   font-weight: 400;
-  line-height: 50px;
+  line-height: 54px;
   border: none;
   box-shadow: 0 6px 18px rgba(201, 168, 76, 0.32);
 }
@@ -390,7 +391,8 @@
 /* ==================== 抽选区域 ==================== */
 .slot-container {
   position: relative;
-  margin: 20px 0;
+  width: 300px;
+  margin: 20px auto;
   display: flex;
   align-items: center;
   justify-content: center;
