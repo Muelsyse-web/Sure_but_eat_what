@@ -43,6 +43,7 @@
 
       <button
         class="blacklist-button {{item.blacklisted ? 'restore' : ''}}"
+        hover-class="button-press"
         data-key="{{item.blacklistKey}}"
         bindtap="onToggleBlacklist"
       >

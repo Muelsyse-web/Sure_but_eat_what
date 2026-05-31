@@ -39,6 +39,17 @@
   pointer-events: none;
 }
 
+.button-press {
+  filter: brightness(0.86);
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 0 2px 8px rgba(44, 36, 22, 0.22);
+}
+
+.button-press-subtle {
+  filter: brightness(0.9);
+  transform: translateY(1px) scale(0.99);
+}
+
 .ambient-barrage {
   position: fixed;
   top: 0;
@@ -552,7 +563,7 @@
 }
 
 .slot-reel.animating {
-  transition: transform 4s cubic-bezier(0.12, 0.76, 0.18, 1);
+  transition: transform 4.46s cubic-bezier(0.12, 0.76, 0.18, 1);
 }
 
 .slot-item {

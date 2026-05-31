@@ -26,3 +26,10 @@ Use one dense commercial area and one residential area.
 - Fetch with cuisine filter: category matching should still work through the normalized `category` field.
 - Confirm result card still shows `¥xx/人` when `biz_ext.cost` is present.
 - Confirm navigation still opens with the selected restaurant coordinates.
+
+## Audio and UI Notes
+
+- Small interaction effects in `assets/audio` can be packaged locally when the total package remains comfortably below the WeChat limit.
+- Large background music stays on CloudBase; `bgm-guanyu.mp3` should remain ignored from the local code package.
+- Unused collected clips should also stay ignored in `project.config.json` until a page actually references them.
+- Interaction polish such as tap sounds or `hover-class` press states must preserve the resting UI from `main`; compare styles before committing behavior-only work.

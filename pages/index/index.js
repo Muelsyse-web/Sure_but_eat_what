@@ -10,6 +10,9 @@ const {
 } = require('../../utils/manualWheels')
 
 const SLOT_ITEM_HEIGHT = 64
+const MANUAL_WHEEL_SPIN_DURATION = 8300
+const SLOT_SPIN_DURATION = 4460
+const SLOT_RESULT_REVEAL_DELAY = 4560
 const DEFAULT_RADIUS = 1000
 const MIN_RADIUS = 10
 const MAX_RADIUS = 1000
@@ -19,7 +22,9 @@ const AUDIO_CLIPS = {
   boot: null,
   manual: null,
   nearby: null,
-  spin: null,
+  wheelSpin: '/assets/audio/wheel-spin.mp3',
+  slotSpin: '/assets/audio/slot-spin.mp3',
+  tap: '/assets/audio/tap.mp3',
   result: null
 }
 
@@ -396,6 +401,19 @@ Page({
     }
   },
 
+  playTapCue() {
+    this.playAudioCue('tap')
+  },
+
+  playSpinCue() {
+    if (this.data.appMode === 'manual' && this.data.manualPickerType === 'wheel') {
+      this.playAudioCue('wheelSpin')
+      return
+    }
+
+    this.playAudioCue('slotSpin')
+  },
+
   showEasterEgg(text) {
     clearTimeout(this._easterEggTimer)
     this.setData({ easterEggText: text })
@@ -413,6 +431,7 @@ Page({
   },
 
   onChooseManual() {
+    this.playTapCue()
     this.playAudioCue('manual')
     this.showEasterEgg('名单已开，接着奏乐')
     clearTimeout(this._slotStartTimer)
@@ -435,6 +454,7 @@ Page({
   },
 
   onChooseNearby() {
+    this.playTapCue()
     this.playAudioCue('nearby')
     this.showEasterEgg('天意开机')
     this.setData({
@@ -456,6 +476,7 @@ Page({
   },
 
   onBackToChoice() {
+    this.playTapCue()
     this.playAudioCue('boot')
     clearTimeout(this._slotStartTimer)
     clearTimeout(this._slotFinishTimer)
@@ -479,6 +500,7 @@ Page({
   },
 
   onOpenReward() {
+    this.playTapCue()
     this.setData({
       showRewardModal: true,
       rewardCodeLoadFailed: false
@@ -486,6 +508,7 @@ Page({
   },
 
   onCloseReward() {
+    this.playTapCue()
     this.setData({ showRewardModal: false })
   },
 
@@ -505,6 +528,7 @@ Page({
   // ==================== 手动候选 ====================
 
   onOpenAddCandidate() {
+    this.playTapCue()
     this.setData({
       showAddCandidateModal: true,
       candidateInput: ''
@@ -516,6 +540,7 @@ Page({
   },
 
   onCancelAddCandidate() {
+    this.playTapCue()
     this.setData({
       showAddCandidateModal: false,
       candidateInput: ''
@@ -523,6 +548,7 @@ Page({
   },
 
   onConfirmAddCandidate() {
+    this.playTapCue()
     const name = String(this.data.candidateInput || '').trim()
     if (!name) {
       wx.showToast({
@@ -549,6 +575,7 @@ Page({
   },
 
   onOpenSaveWheel() {
+    this.playTapCue()
     if (!this.data.canSaveManualWheel) {
       wx.showToast({
         title: this.data.manualCandidates.length === 0 ? '席上无人，存了也空' : '这盘已经入史册',
@@ -568,6 +595,7 @@ Page({
   },
 
   onCloseSaveWheel() {
+    this.playTapCue()
     this.setData({
       showSaveWheelModal: false,
       wheelNameInput: ''
@@ -575,6 +603,7 @@ Page({
   },
 
   onConfirmSaveWheel() {
+    this.playTapCue()
     const name = String(this.data.wheelNameInput || '').trim()
     if (!name) {
       wx.showToast({
@@ -608,6 +637,7 @@ Page({
   },
 
   onOpenSavedWheels() {
+    this.playTapCue()
     this.setData({
       showSavedWheelsModal: true,
       savedWheels: getSavedManualWheels()
@@ -615,6 +645,7 @@ Page({
   },
 
   onCloseSavedWheels() {
+    this.playTapCue()
     this.setData({
       showSavedWheelsModal: false,
       showRenameWheelModal: false,
@@ -623,6 +654,7 @@ Page({
   },
 
   onLoadSavedWheel(e) {
+    this.playTapCue()
     const id = e.currentTarget.dataset.id
     const wheel = this.data.savedWheels.find(item => item.id === id)
     if (!wheel || !Array.isArray(wheel.items) || wheel.items.length === 0) {
@@ -654,6 +686,7 @@ Page({
   },
 
   onOpenRenameWheel(e) {
+    this.playTapCue()
     const id = e.currentTarget.dataset.id
     const wheel = this.data.savedWheels.find(item => item.id === id)
     if (!wheel) return
@@ -670,6 +703,7 @@ Page({
   },
 
   onCloseRenameWheel() {
+    this.playTapCue()
     this.setData({
       showRenameWheelModal: false,
       renamingWheelId: null,
@@ -678,6 +712,7 @@ Page({
   },
 
   onConfirmRenameWheel() {
+    this.playTapCue()
     const name = String(this.data.renameWheelInput || '').trim()
     if (!name) {
       wx.showToast({
@@ -706,6 +741,7 @@ Page({
   },
 
   onDeleteSavedWheel(e) {
+    this.playTapCue()
     const id = e.currentTarget.dataset.id
     const wheel = this.data.savedWheels.find(item => item.id === id)
     if (!wheel) return
@@ -737,6 +773,7 @@ Page({
   },
 
   onOpenEditWheelItems(e) {
+    this.playTapCue()
     const id = e.currentTarget.dataset.id
     const wheel = this.data.savedWheels.find(item => item.id === id)
     if (!wheel) return
@@ -762,6 +799,7 @@ Page({
   },
 
   onAddEditingWheelItem() {
+    this.playTapCue()
     const title = String(this.data.editingWheelItemInput || '').trim()
     if (!title) {
       wx.showToast({
@@ -785,6 +823,7 @@ Page({
   },
 
   onRemoveEditingWheelItem(e) {
+    this.playTapCue()
     const index = Number(e.currentTarget.dataset.index)
     if (!Number.isInteger(index)) return
 
@@ -793,6 +832,7 @@ Page({
   },
 
   onCloseEditWheelItems() {
+    this.playTapCue()
     this.setData({
       showEditWheelItemsModal: false,
       editingWheelId: null,
@@ -803,6 +843,7 @@ Page({
   },
 
   onConfirmEditWheelItems() {
+    this.playTapCue()
     if (this.data.editingWheelItems.length === 0) {
       wx.showToast({
         title: '至少留一道菜',
@@ -1024,7 +1065,7 @@ Page({
     const segmentAngle = (2 * Math.PI) / restaurants.length
     const targetAngle = (2 * Math.PI) - (targetIndex * segmentAngle) - (segmentAngle / 2)
     const totalRotation = (5 * 2 * Math.PI) + targetAngle
-    const duration = 3500
+    const duration = MANUAL_WHEEL_SPIN_DURATION
     const startTime = Date.now()
 
     const animate = () => {
@@ -1049,6 +1090,7 @@ Page({
    * 获取大致位置，然后加载餐厅数据
    */
   onFetchNearbyIntent() {
+    this.playTapCue()
     this.showEasterEgg('天意开坛')
     this.setData({ nearbyHasFetched: true })
     this.loadRestaurants()
@@ -1295,7 +1337,7 @@ Page({
       return
     }
 
-    this.playAudioCue('spin')
+    this.playSpinCue()
     this.showEasterEgg('优势在胃')
 
     if (this.data.appMode === 'manual' && this.data.manualPickerType === 'wheel') {
@@ -1393,7 +1435,7 @@ Page({
         result: targetRestaurant,
         showModal: true
       })
-    }, 4100)
+    }, SLOT_RESULT_REVEAL_DELAY)
   },
 
   // ==================== 筛选面板 ====================
@@ -1402,6 +1444,7 @@ Page({
    * 打开筛选面板
    */
   onOpenFilter() {
+    this.playTapCue()
     const { filters } = this.data
     const selectedCuisines = normalizeCuisines(filters.cuisines)
     this.setData({
@@ -1434,6 +1477,7 @@ Page({
    * 关闭筛选面板
    */
   onCloseFilter() {
+    this.playTapCue()
     this.setData({ showFilterPanel: false })
   },
 
@@ -1451,6 +1495,7 @@ Page({
    * 选择/取消菜系。
    */
   onSelectCuisine(e) {
+    this.playTapCue()
     const cuisine = e.currentTarget.dataset.cuisine
     let selectedCuisines = normalizeCuisines(this.data.selectedCuisines)
 
@@ -1491,10 +1536,12 @@ Page({
   },
 
   onToggleIncludeUncosted() {
+    this.playTapCue()
     this.setData({ includeUncosted: !this.data.includeUncosted })
   },
 
   onToggleIncludeUnrated() {
+    this.playTapCue()
     this.setData({ includeUnrated: !this.data.includeUnrated })
   },
 
@@ -1509,6 +1556,7 @@ Page({
    * 应用筛选条件
    */
   onApplyFilter() {
+    this.playTapCue()
     const validation = validateFilterInputs({
       costMinInput: this.data.costMinInput,
       costMaxInput: this.data.costMaxInput,
@@ -1599,6 +1647,7 @@ Page({
    * 重置筛选条件
    */
   resetFilters() {
+    this.playTapCue()
     const fullList = this.data.allNearbyRestaurants
     const restaurants = applyRestaurantBlacklist(fullList)
 
@@ -1636,6 +1685,7 @@ Page({
    * 关闭结果卡片
    */
   onCloseModal() {
+    this.playTapCue()
     this.setData({ showModal: false })
   },
 
@@ -1653,6 +1703,7 @@ Page({
   },
 
   onOpenRestaurantList() {
+    this.playTapCue()
     // Preserve the full restaurant objects for the child page:
     // biz_ext.rating, biz_ext.cost, avg_cost, category, and distance stay intact.
     wx.setStorageSync(NEARBY_RESTAURANT_LIST_STORAGE_KEY, this.data.allNearbyRestaurants)
@@ -1665,6 +1716,7 @@ Page({
    * 点击"导航去这里"
    */
   onNavigate() {
+    this.playTapCue()
     const { result } = this.data
     if (!result || !result.location) return
 

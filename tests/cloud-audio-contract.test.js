@@ -25,7 +25,13 @@ assert(
   /boot:\s*null/.test(pageJs) &&
     /manual:\s*null/.test(pageJs) &&
     /nearby:\s*null/.test(pageJs) &&
-    /spin:\s*null/.test(pageJs) &&
     /result:\s*null/.test(pageJs),
-  'missing local sound-effect files should be disabled instead of referenced from assets/audio'
+  'missing optional sound-effect files should stay disabled until configured'
+)
+
+assert(
+  /wheelSpin:\s*'\/assets\/audio\/wheel-spin\.mp3'/.test(pageJs) &&
+    /slotSpin:\s*'\/assets\/audio\/slot-spin\.mp3'/.test(pageJs) &&
+    /tap:\s*'\/assets\/audio\/tap\.mp3'/.test(pageJs),
+  'small interaction sound effects should be referenced from local assets/audio files'
 )

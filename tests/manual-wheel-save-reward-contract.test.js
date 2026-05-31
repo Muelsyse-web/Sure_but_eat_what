@@ -89,7 +89,7 @@ assert(
   /\.save-wheel-button::after/.test(pageWxss) &&
   /\.load-wheel-button::after/.test(pageWxss) &&
   /\.wheel-save-button\.disabled/.test(pageWxss) &&
-  /\.load-wheel-button[\s\S]*background:\s*linear-gradient\(135deg,\s*#267c7a,\s*#3d6a58\)/.test(pageWxss) &&
+  /\.load-wheel-button\s*{[^}]*background:\s*linear-gradient\(135deg,\s*#8b6d3f,\s*#a8864a\)/.test(pageWxss) &&
   /\.reward-button::after/.test(pageWxss),
   'new buttons should remove WeChat default pseudo borders and expose enabled/disabled styling'
 )

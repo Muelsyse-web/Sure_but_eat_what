@@ -9,6 +9,12 @@
   color: #2c2416;
 }
 
+.button-press {
+  filter: brightness(0.86);
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 0 2px 8px rgba(44, 36, 22, 0.22);
+}
+
 .header {
   display: flex;
   flex-direction: column;

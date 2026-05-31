@@ -20,8 +20,12 @@
   "packOptions": {
     "ignore": [
       {
-        "type": "folder",
-        "value": "assets/audio"
+        "type": "file",
+        "value": "assets/audio/bgm-guanyu.mp3"
+      },
+      {
+        "type": "file",
+        "value": "assets/audio/OnceSayMyNameITMXIASINI.mp3"
       },
       {
         "type": "folder",
@@ -66,6 +70,14 @@
       {
         "type": "file",
         "value": ".DS_Store"
+      },
+      {
+        "type": "file",
+        "value": "assets/.DS_Store"
+      },
+      {
+        "type": "file",
+        "value": "assets/images/.DS_Store"
       },
       {
         "type": "file",

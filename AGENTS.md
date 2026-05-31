@@ -29,10 +29,11 @@ User opens app
     → filters by cuisine/cost on server side after enrichment
     → returns trimmed restaurant list
   → cache hit? use cached data
-  → buildWheelSegments (max 8 items)
-  → user taps "开始旋转"
-  → Canvas 2D easeOutCubic animation (4s, 5+ rotations)
-  → modal card with rating/cost/distance + "导航去这里" (wx.openLocation)
+  → manual mode with <=8 items uses Canvas wheel; nearby and >8 manual items use slot list
+  → user taps "让天意决定"
+  → local spin sound plays (`wheel-spin.mp3` or `slot-spin.mp3`)
+  → wheel/slot animation duration should match the active spin audio
+  → modal card with rating/cost/distance + "就吃这家" (wx.openLocation)
 ```
 
 ### Key files
@@ -45,6 +46,7 @@ User opens app
 | `pages/index/index.js` | All page logic — data fetching, wheel drawing/animation, filters, modal |
 | `pages/index/index.wxml` | Page template — Canvas, buttons, bottom sheet, modal card |
 | `pages/index/index.wxss` | All styles (dark gradient theme, orange accent `#ff4400`) |
+| `assets/audio/README.md` | Audio slot notes, packaging expectations, and which clips are local vs CloudBase |
 | `utils/cache.js` | `wx.Storage`-backed cache with Haversine distance gating (200m, max 50 items) |
 | `cloudfunctions/fetchRestaurants/index.js` | Cloud function orchestrator — AMap primary, Baidu cost enrichment, Tencent fallback |
 | `cloudfunctions/fetchRestaurants/providers/*.js` | Provider modules for AMap, Baidu, and Tencent |
@@ -64,7 +66,22 @@ User opens app
 
 - Canvas node, 2D context, and DPR are cached once in `onReady()` — not re-queried per frame.
 - `_drawWheel(rotation)` redraws the full wheel at the given angle. 8 color segments with emoji + truncated name.
-- `_animateWheel(targetIndex, callback)` uses `canvasNode.requestAnimationFrame` with easeOutCubic over 4 seconds.
+- `_animateManualWheel(targetIndex, callback)` should stay aligned with `assets/audio/wheel-spin.mp3` duration.
+
+### Audio and package size
+
+- Small interaction effects may be packaged locally under `assets/audio/`.
+- Large or unused clips must be excluded in `project.config.json` until the code actually references them. The WeChat single package limit is tight; do not include large background music in the code package.
+- `bgm-guanyu.mp3` is intentionally loaded from CloudBase in `app.js`, not from the local `assets/audio` path.
+- If a new local audio file is added, update `assets/audio/README.md`, `project.config.json`, and a contract test so package-size behavior is explicit.
+- Keep `wx.createInnerAudioContext` calls guarded; missing or unsupported audio should fail silently except for a console warning in caught playback errors.
+
+### UI stability
+
+- Do not change resting UI colors, gradients, typography, layout, or copy while adding behavior such as sound, hover states, or timers unless the user explicitly asks for a redesign.
+- For style work, compare against `main` before finishing: `git diff main -- pages/index/index.wxss pages/index/index.wxml pages/restaurants/list.wxss pages/restaurants/list.wxml`.
+- Press/hover feedback should be transient (`hover-class`) and must not alter the normal, unpressed appearance.
+- If an existing contract test expects a style that disagrees with `main`, update the test to protect the current `main` UI instead of changing the UI to satisfy stale expectations.
 
 ### Cloud function details
 
@@ -84,4 +101,6 @@ User opens app
 - **Null checks**: Use `== null` (not `!value`) for coordinate/field validation — latitude 0 is a valid value.
 - **`catchtap` vs `bindtap`**: Modal and bottom sheet panels use `catchtap=""` on the inner container to prevent tap events from bubbling to the overlay's close handler.
 - **WeChat button `::after` borders**: All `<button>` elements get a default `::after` pseudo-border from WeChat's base styles. Every button in `index.wxss` needs `::after { border: none }` to remove it.
+- **UI regression risk**: Button audio/press feedback should not restyle the app. Preserve the main branch palette unless a UI change is explicitly requested.
+- **Audio packaging**: `project.config.json` ignores large/unused audio files individually. Do not re-ignore the whole `assets/audio` folder if local interaction effects are used.
 - **`project.private.config.json`**: Contains personal DevTools settings (appid, etc.) and is gitignored — don't rely on it for project-level config.

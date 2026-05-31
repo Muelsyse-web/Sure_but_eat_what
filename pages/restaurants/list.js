@@ -5,6 +5,7 @@ const {
 } = require('../../utils/restaurantBlacklist')
 
 const NEARBY_RESTAURANT_LIST_STORAGE_KEY = 'nearbyRestaurantList'
+const TAP_AUDIO_SRC = '/assets/audio/tap.mp3'
 
 function withBlacklistState(restaurants) {
   const blacklistKeys = new Set(getRestaurantBlacklist().map(item => item.key))
@@ -19,6 +20,8 @@ Page({
   data: {
     restaurants: []
   },
+
+  _tapAudio: null,
 
   onLoad() {
     this.refreshRestaurants()
@@ -42,7 +45,28 @@ Page({
     })
   },
 
+  playTapCue() {
+    if (!wx.createInnerAudioContext || !TAP_AUDIO_SRC) return
+
+    if (!this._tapAudio) {
+      const audio = wx.createInnerAudioContext()
+      audio.src = TAP_AUDIO_SRC
+      audio.obeyMuteSwitch = false
+      audio.onError(() => {})
+      this._tapAudio = audio
+    }
+
+    try {
+      this._tapAudio.stop()
+      this._tapAudio.seek(0)
+      this._tapAudio.play()
+    } catch (err) {
+      console.warn('播放音效失败: tap', err)
+    }
+  },
+
   onToggleBlacklist(e) {
+    this.playTapCue()
     const key = e.currentTarget.dataset.key
     const restaurant = this.data.restaurants.find(item => item.blacklistKey === key)
     if (!restaurant) return

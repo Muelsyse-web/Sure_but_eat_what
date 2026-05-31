@@ -16,10 +16,10 @@ assert(
 )
 
 assert(
-  /\.restaurant-list-button[\s\S]*linear-gradient\(135deg,\s*#8fd1cb,\s*#f5ddaa\)/.test(pageWxss) &&
-  /\.restaurant-list-button[\s\S]*color:\s*#241915/.test(pageWxss) &&
+  /\.restaurant-list-button\s*{[^}]*linear-gradient\(135deg,\s*#a8864a,\s*#2c2416\)/.test(pageWxss) &&
+  /\.restaurant-list-button\s*{[^}]*color:\s*#f5efdf/.test(pageWxss) &&
   /\.restaurant-list-button::after[\s\S]*border:\s*none/.test(pageWxss),
-  'restaurant list button should use a brighter teal-to-gold style and remove WeChat pseudo border'
+  'restaurant list button should keep the main branch brown-dark style and remove WeChat pseudo border'
 )
 
 assert(
