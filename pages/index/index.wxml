@@ -273,7 +273,7 @@
   <!-- 保存手动转盘 -->
   <view class="save-wheel-overlay {{showSaveWheelModal ? 'visible' : ''}}" bindtap="onCloseSaveWheel">
     <view class="save-wheel-dialog {{showSaveWheelModal ? 'visible' : ''}}" catchtap="noop">
-      <text class="candidate-title">给这盘天意留名</text>
+      <text class="candidate-title">快给我记下来，以后清算</text>
       <input
         class="candidate-input"
         placeholder="比如：周五不想动名单"

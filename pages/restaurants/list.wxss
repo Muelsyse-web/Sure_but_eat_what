@@ -3,10 +3,10 @@
   box-sizing: border-box;
   padding: 24px 18px;
   background:
-    radial-gradient(circle at 14% 10%, rgba(52, 96, 118, 0.18), transparent 32%),
-    radial-gradient(circle at 86% 22%, rgba(141, 49, 62, 0.18), transparent 34%),
-    linear-gradient(180deg, #120f13 0%, #1d1214 52%, #080808 100%);
-  color: #fff7df;
+    radial-gradient(circle at 14% 10%, rgba(201, 168, 76, 0.18), transparent 32%),
+    radial-gradient(circle at 86% 22%, rgba(196, 74, 58, 0.18), transparent 34%),
+    linear-gradient(180deg, #f5efdf 0%, #ede0c8 52%, #e0d0b0 100%);
+  color: #2c2416;
 }
 
 .header {
@@ -17,24 +17,24 @@
 }
 
 .title {
-  color: #f5ddaa;
+  color: #2c2416;
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 0;
 }
 
 .subtitle {
-  color: #8fd1cb;
+  color: #a8864a;
   font-size: 13px;
 }
 
 .empty-state {
   margin-top: 90px;
   padding: 18px;
-  border: 1px solid rgba(143, 209, 203, 0.24);
+  border: 1px solid rgba(168, 134, 74, 0.24);
   border-radius: 8px;
-  background: rgba(18, 15, 19, 0.68);
-  color: rgba(245, 221, 170, 0.78);
+  background: rgba(44, 36, 22, 0.06);
+  color: rgba(44, 36, 22, 0.52);
   font-size: 14px;
   text-align: center;
 }
@@ -46,15 +46,15 @@
 .restaurant-card {
   margin-bottom: 12px;
   padding: 14px;
-  border: 1px solid rgba(245, 221, 170, 0.14);
+  border: 1px solid rgba(44, 36, 22, 0.14);
   border-radius: 8px;
-  background: rgba(18, 15, 19, 0.78);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  background: rgba(44, 36, 22, 0.06);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
 }
 
 .restaurant-card.blacklisted {
-  border-color: rgba(220, 108, 120, 0.34);
-  background: rgba(42, 24, 28, 0.78);
+  border-color: rgba(196, 74, 58, 0.34);
+  background: rgba(196, 74, 58, 0.08);
 }
 
 .restaurant-main {
@@ -72,7 +72,7 @@
 
 .restaurant-name {
   flex: 1;
-  color: #fff7df;
+  color: #2c2416;
   font-size: 17px;
   font-weight: 700;
   line-height: 1.35;
@@ -82,13 +82,13 @@
   flex-shrink: 0;
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(220, 108, 120, 0.18);
-  color: #dc6c78;
+  background: rgba(196, 74, 58, 0.18);
+  color: #c44a3a;
   font-size: 11px;
 }
 
 .restaurant-address {
-  color: rgba(245, 221, 170, 0.56);
+  color: rgba(44, 36, 22, 0.56);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -110,16 +110,16 @@
 .fact-label {
   width: 38px;
   flex-shrink: 0;
-  color: rgba(143, 209, 203, 0.78);
+  color: rgba(168, 134, 74, 0.78);
 }
 
 .fact-value {
   flex: 1;
-  color: rgba(255, 247, 223, 0.88);
+  color: rgba(44, 36, 22, 0.88);
 }
 
 .fact-value.star {
-  color: #d7b878;
+  color: #c9a84c;
 }
 
 .blacklist-button {
@@ -128,7 +128,7 @@
   margin-top: 14px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #b83d45, #d99b50);
+  background: linear-gradient(135deg, #2c2416, #7a6e64);
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
@@ -136,7 +136,7 @@
 }
 
 .blacklist-button.restore {
-  background: linear-gradient(135deg, #267c7a, #3d6a58);
+  background: linear-gradient(135deg, #8b6d3f, #a8864a);
 }
 
 .blacklist-button::after {

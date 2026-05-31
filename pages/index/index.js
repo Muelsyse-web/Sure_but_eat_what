@@ -714,7 +714,7 @@ Page({
       title: '删掉这盘？',
       content: `确定删除「${wheel.name}」吗？`,
       confirmText: '删除',
-      confirmColor: '#b83d45',
+      confirmColor: '#c44a3a',
       success: res => {
         if (!res.confirm) return
 
@@ -936,32 +936,32 @@ Page({
       ctx.arc(centerX, centerY, radius + 10, 0, 2 * Math.PI)
       ctx.shadowColor = 'rgba(0, 0, 0, 0.2)'
       ctx.shadowBlur = 15
-      ctx.fillStyle = '#120f13'
+      ctx.fillStyle = '#f5efdf'
       ctx.fill()
       ctx.restore()
 
       if (restaurants.length === 0) {
         ctx.beginPath()
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI)
-        ctx.fillStyle = 'rgba(255, 247, 223, 0.06)'
+        ctx.fillStyle = 'rgba(44, 36, 22, 0.06)'
         ctx.fill()
-        ctx.strokeStyle = 'rgba(143, 209, 203, 0.22)'
+        ctx.strokeStyle = 'rgba(168, 134, 74, 0.22)'
         ctx.lineWidth = 2
         ctx.stroke()
-        ctx.fillStyle = 'rgba(245, 221, 170, 0.7)'
+        ctx.fillStyle = '#2c2416'
         ctx.font = 'bold 18px sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText('席上无人', centerX, centerY - 8)
         ctx.font = '12px sans-serif'
-        ctx.fillStyle = 'rgba(245, 221, 170, 0.48)'
+        ctx.fillStyle = 'rgba(44, 36, 22, 0.48)'
         ctx.fillText('先把饭名供上来', centerX, centerY + 16)
         return
       }
 
       const colors = [
-        '#b83d45', '#267c7a', '#d99b50', '#6d5f8d',
-        '#dc6c78', '#3d6a58', '#c7793f', '#455b62'
+        '#c44a3a', '#a8864a', '#2c2416', '#7a6e64',
+        '#8b6d3f', '#5a4e42', '#c9a84c', '#94897e'
       ]
       const segmentAngle = (2 * Math.PI) / restaurants.length
 
@@ -976,7 +976,7 @@ Page({
         ctx.closePath()
         ctx.fillStyle = colors[i % colors.length]
         ctx.fill()
-        ctx.strokeStyle = 'rgba(255, 247, 223, 0.84)'
+        ctx.strokeStyle = 'rgba(44, 36, 22, 0.3)'
         ctx.lineWidth = 1.5
         ctx.stroke()
 
@@ -984,7 +984,7 @@ Page({
         ctx.translate(centerX, centerY)
         ctx.rotate(startAngle + segmentAngle / 2)
         ctx.font = 'bold 13px sans-serif'
-        ctx.fillStyle = '#fff7df'
+        ctx.fillStyle = '#f5efdf'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText(title, radius * 0.58, 0)
@@ -993,12 +993,12 @@ Page({
 
       ctx.beginPath()
       ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI)
-      ctx.fillStyle = '#142024'
+      ctx.fillStyle = '#2c2416'
       ctx.fill()
-      ctx.strokeStyle = '#8fd1cb'
+      ctx.strokeStyle = '#a8864a'
       ctx.lineWidth = 2
       ctx.stroke()
-      ctx.fillStyle = '#fff7df'
+      ctx.fillStyle = '#f5efdf'
       ctx.font = 'bold 14px sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
@@ -1009,9 +1009,9 @@ Page({
       ctx.lineTo(centerX - 12, centerY - radius + 5)
       ctx.lineTo(centerX + 12, centerY - radius + 5)
       ctx.closePath()
-      ctx.fillStyle = '#fff7df'
+      ctx.fillStyle = '#c44a3a'
       ctx.fill()
-      ctx.strokeStyle = '#dc6c78'
+      ctx.strokeStyle = '#c9a84c'
       ctx.lineWidth = 2
       ctx.stroke()
     })
