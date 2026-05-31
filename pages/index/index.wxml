@@ -57,11 +57,6 @@
     <button class="add-candidate-button" hover-class="button-press" bindtap="onOpenAddCandidate">+</button>
   </view>
 
-  <view wx:if="{{appMode === 'manual'}}" class="manual-wheel-actions">
-    <button class="load-wheel-button" hover-class="button-press" bindtap="onOpenSavedWheels">往日种种，你当真不记得了吗？</button>
-    <button wx:if="{{manualCandidates.length > 0}}" class="load-wheel-button manage-candidates-button" hover-class="button-press" bindtap="onOpenManageCandidates">窥探全部天意</button>
-  </view>
-
   <!-- 抽选区域 -->
   <view wx:if="{{appMode === 'nearby' || (appMode === 'manual' && manualPickerType === 'slot')}}" class="slot-container">
     <view class="slot-machine">
@@ -95,6 +90,11 @@
     </view>
     <button wx:if="{{appMode === 'manual'}}" class="save-wheel-button wheel-save-button slot-save-button {{canSaveManualWheel ? '' : 'disabled'}}" bindtap="onOpenSaveWheel" disabled="{{!canSaveManualWheel}}" hover-class="button-press">保存</button>
     <button wx:if="{{appMode === 'manual'}}" class="add-candidate-button slot-add-button" hover-class="button-press" bindtap="onOpenAddCandidate">+</button>
+  </view>
+
+  <view wx:if="{{appMode === 'manual'}}" class="manual-wheel-actions">
+    <button class="load-wheel-button" hover-class="button-press" bindtap="onOpenSavedWheels">往日种种，你当真不记得了吗？</button>
+    <button wx:if="{{manualCandidates.length > 0}}" class="load-wheel-button manage-candidates-button" hover-class="button-press" bindtap="onOpenManageCandidates">窥探全部天意</button>
   </view>
 
   <!-- 旋转按钮 -->

@@ -315,11 +315,13 @@
 .slot-add-button {
   right: 0;
   bottom: -16px;
+  z-index: 5;
 }
 
 .slot-save-button {
   left: 0;
   bottom: -16px;
+  z-index: 5;
 }
 
 .manual-wheel-actions {
