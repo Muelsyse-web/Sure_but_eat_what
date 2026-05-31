@@ -313,18 +313,6 @@
   border: none;
 }
 
-.slot-add-button {
-  right: 0;
-  bottom: -16px;
-  z-index: 5;
-}
-
-.slot-save-button {
-  left: 0;
-  bottom: -16px;
-  z-index: 5;
-}
-
 .manual-wheel-actions {
   width: 300px;
   display: flex;
@@ -366,6 +354,18 @@
   background: linear-gradient(135deg, #d9d5ce, #cfcbc4);
   color: #b8b4ac;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.slot-add-button {
+  right: 0;
+  bottom: -16px;
+  z-index: 5;
+}
+
+.slot-save-button {
+  left: 0;
+  bottom: -16px;
+  z-index: 5;
 }
 
 .load-wheel-button {
