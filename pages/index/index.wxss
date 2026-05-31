@@ -259,12 +259,6 @@
   box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.08), 0 8px 22px rgba(168, 134, 74, 0.22);
 }
 
-.choice-hint {
-  text-align: center;
-  color: rgba(201, 168, 76, 0.58);
-  font-size: 12px;
-}
-
 .reward-button {
   position: fixed;
   right: 18px;

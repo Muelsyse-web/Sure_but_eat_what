@@ -38,7 +38,7 @@
 
     <button class="choice-button primary-choice" bindtap="onChooseManual">我有饭局名单</button>
     <button class="choice-button secondary-choice" bindtap="onChooseNearby">附近有什么？</button>
-    <text class="choice-hint">严肃决策，随机执行。</text>
+
   </view>
   <button wx:if="{{appMode === 'choice'}}" class="reward-button" bindtap="onOpenReward">赏些银两</button>
 
