@@ -14,6 +14,7 @@ const MANUAL_WHEEL_SPIN_DURATION = 8300
 const SLOT_SPIN_DURATION = 4460
 const SLOT_RESULT_REVEAL_DELAY = 4560
 const DONT_WANT_TABLE_DELAY = 4056
+const ASSET_URL_FUNCTION_NAME = 'getAssetUrls'
 const DEFAULT_RADIUS = 1000
 const MIN_RADIUS = 10
 const MAX_RADIUS = 1000
@@ -23,7 +24,7 @@ const AUDIO_CLIPS = {
   boot: null,
   manual: null,
   nearby: null,
-  wheelSpin: '/assets/audio/wheel-spin.mp3',
+  wheelSpin: null,
   slotSpin: '/assets/audio/slot-spin.mp3',
   tap: '/assets/audio/tap.mp3',
   nameReveal: '/assets/audio/OnceSayMyNameITMXIASINI.mp3',
@@ -326,7 +327,7 @@ Page({
     easterEggText: '',
     showResultSeal: false,
     showRewardModal: false,
-    rewardCodeSrc: '/assets/images/reward-code.png',
+    rewardCodeSrc: '',
     rewardCodeLoadFailed: false,
 
     // 结果数据
@@ -382,7 +383,9 @@ Page({
   _easterEggTimer: null,
   _resultSealTimer: null,
 
-  onLoad() {},
+  onLoad() {
+    this.resolveCloudAssetUrls()
+  },
 
   onShow() {
     if (this.data.appMode === 'nearby' && this.data.allNearbyRestaurants.length > 0) {
@@ -401,6 +404,40 @@ Page({
 
   onPageTap() {
     this.notifyAppUserGesture()
+  },
+
+  resolveCloudAssetUrls() {
+    if (!wx.cloud || !wx.cloud.callFunction || this._cloudAssetUrlResolving) return
+
+    this._cloudAssetUrlResolving = true
+    wx.cloud.callFunction({
+      name: ASSET_URL_FUNCTION_NAME,
+      success: (res) => {
+        this._cloudAssetUrlResolving = false
+        const result = res && res.result
+        const assets = result && result.assets
+
+        if (!assets) {
+          console.warn('[Assets] 云端资源链接无效:', result)
+          return
+        }
+
+        if (assets.wheelSpin && assets.wheelSpin.tempFileURL) {
+          AUDIO_CLIPS.wheelSpin = assets.wheelSpin.tempFileURL
+        }
+
+        if (assets.rewardCode && assets.rewardCode.tempFileURL) {
+          this.setData({
+            rewardCodeSrc: assets.rewardCode.tempFileURL,
+            rewardCodeLoadFailed: false
+          })
+        }
+      },
+      fail: (err) => {
+        this._cloudAssetUrlResolving = false
+        console.warn('[Assets] 云端资源链接获取失败:', err)
+      }
+    })
   },
 
   getAudioVolume(cue) {
@@ -568,7 +605,7 @@ Page({
   },
 
   onPreviewRewardCode() {
-    if (this.data.rewardCodeLoadFailed) return
+    if (this.data.rewardCodeLoadFailed || !this.data.rewardCodeSrc) return
 
     wx.previewImage({
       urls: [this.data.rewardCodeSrc],

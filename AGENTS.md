@@ -11,7 +11,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 There is no CLI build/lint/test toolchain. All development happens inside **WeChat DevTools** (微信开发者工具):
 1. Open the project root in WeChat DevTools.
 2. The simulator runs the mini program locally.
-3. Cloud functions must be **deployed separately**: right-click `cloudfunctions/fetchRestaurants` → "Upload & Deploy" (云端安装依赖). They do not run from the local simulator unless you have the cloud SDK emulator configured.
+3. Cloud functions must be **deployed separately**: right-click `cloudfunctions/fetchRestaurants` and `cloudfunctions/getBgmUrl` → "Upload & Deploy" (云端安装依赖). They do not run from the local simulator unless you have the cloud SDK emulator configured.
 4. The cloud environment ID is hardcoded in `app.js:5` — change it if the environment changes.
 
 ## Architecture
@@ -54,6 +54,7 @@ User opens app
 | `cloudfunctions/fetchRestaurants/geo.js` | Haversine and GCJ-02/BD-09 coordinate helpers |
 | `cloudfunctions/fetchRestaurants/http.js` | JSON GET helper for provider calls |
 | `cloudfunctions/fetchRestaurants/package.json` | Cloud function dependencies (`wx-server-sdk ~2.6.3`) |
+| `cloudfunctions/getBgmUrl/index.js` | Cloud function that resolves a temporary URL for the CloudBase Guan Yu BGM |
 
 ### Cache behavior
 
@@ -73,6 +74,8 @@ User opens app
 - Small interaction effects may be packaged locally under `assets/audio/`.
 - Large or unused clips must be excluded in `project.config.json` until the code actually references them. The WeChat single package limit is tight; do not include large background music in the code package.
 - `bgm-guanyu.mp3` is intentionally loaded from CloudBase in `app.js`, not from the local `assets/audio` path.
+- The client must not read the BGM storage file directly; `app.js` calls the deployed `getBgmUrl` cloud function because client-side `getTempFileURL` can fail with `STORAGE_EXCEED_AUTHORITY`.
+- BGM startup can be blocked until a user gesture; page-level audio helpers should call `getApp().notifyUserGesture()` before playing local effects so `app.js` can retry the looping CloudBase BGM.
 - If a new local audio file is added, update `assets/audio/README.md`, `project.config.json`, and a contract test so package-size behavior is explicit.
 - Keep `wx.createInnerAudioContext` calls guarded; missing or unsupported audio should fail silently except for a console warning in caught playback errors.
 

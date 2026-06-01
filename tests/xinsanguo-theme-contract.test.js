@@ -14,12 +14,23 @@ assert(/附近有什么？/.test(wxml), 'nearby entry should keep the eating ind
 assert(/让天意决定/.test(wxml), 'spin button should package randomness as fate')
 assert(/弹幕抽菜机/.test(wxml), 'picker should include a barrage-style meme framing')
 assert(/说出吾名，吓汝一跳/.test(wxml), 'result card should use a New Three Kingdoms reveal gag')
-assert(/接着抽/.test(wxml), 'spin-again button should keep the music-and-reroll gag concise')
+assert(/接着奏乐，接着舞/.test(wxml), 'spin-again button should use the requested dance-and-music copy')
 
 assert(/BACKGROUND_MUSIC_FILE_ID/.test(appJs), 'app should define a CloudBase background music source')
 assert(/bgm-guanyu\.mp3/.test(appJs), 'app should use the Guan Yu song copy as background music')
 
-assert(/ambient-barrage/.test(wxss), 'page should include a lightweight barrage backdrop layer')
+assert(
+  !/ambient-barrage/.test(wxml + wxss) && !/ambient-line/.test(wxml + wxss),
+  'home page should remove the small ambient background text'
+)
+assert(
+  /\.page\s*{[\s\S]*background:\s*#f5efdf;/.test(wxss) &&
+    !/\.page::before/.test(wxss) &&
+    !/\.page::after/.test(wxss) &&
+    !/url\(/.test(wxss) &&
+    !/陈留大食堂封面/.test(wxml + wxss),
+  'home page should use a plain warm solid background without image or gradient overlays'
+)
 assert(/#2c2416/.test(wxss) && /#a8864a/.test(wxss), 'theme should keep the main branch warm banquet palette')
 assert(/choice-button/.test(wxss) && /letter-spacing:\s*0/.test(wxss), 'themed buttons should keep stable letter spacing')
 assert(

@@ -1,5 +1,6 @@
 {
   "cloud": true,
+  "lazyCodeLoading": "requiredComponents",
   "pages": [
     "pages/index/index",
     "pages/restaurants/list"

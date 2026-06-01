@@ -6,7 +6,13 @@ const {
 
 const NEARBY_RESTAURANT_LIST_STORAGE_KEY = 'nearbyRestaurantList'
 const TAP_AUDIO_SRC = '/assets/audio/tap.mp3'
-const DETAIL_AUDIO_SRC = '/assets/audio/OnceSayMyNameITMXIASINI.mp3'
+const GET_OUT_AUDIO_SRC = '/assets/audio/GetOut.mp3'
+const LUANSHI_AUDIO_SRC = '/assets/audio/Luanshi.mp3'
+const AUDIO_VOLUMES = {
+  tap: 1,
+  getOut: 1,
+  luanshi: 1
+}
 
 function withBlacklistState(restaurants) {
   const blacklistKeys = new Set(getRestaurantBlacklist().map(item => item.key))
@@ -22,11 +28,9 @@ Page({
     restaurants: []
   },
 
-  _tapAudio: null,
-  _detailAudio: null,
+  _audioContexts: null,
 
   onLoad() {
-    this.playDetailCue()
     this.refreshRestaurants()
   },
 
@@ -48,54 +52,69 @@ Page({
     })
   },
 
-  playTapCue() {
-    if (!wx.createInnerAudioContext || !TAP_AUDIO_SRC) return
+  notifyAppUserGesture() {
+    if (typeof getApp !== 'function') return
 
-    if (!this._tapAudio) {
-      const audio = wx.createInnerAudioContext()
-      audio.src = TAP_AUDIO_SRC
-      audio.obeyMuteSwitch = false
-      audio.onError(() => {})
-      this._tapAudio = audio
-    }
-
-    try {
-      this._tapAudio.stop()
-      this._tapAudio.seek(0)
-      this._tapAudio.play()
-    } catch (err) {
-      console.warn('播放音效失败: tap', err)
+    const app = getApp()
+    if (app && typeof app.notifyUserGesture === 'function') {
+      app.notifyUserGesture()
     }
   },
 
-  playDetailCue() {
-    if (!wx.createInnerAudioContext || !DETAIL_AUDIO_SRC) return
+  onPageTap() {
+    this.notifyAppUserGesture()
+  },
 
-    if (!this._detailAudio) {
+  getAudioVolume(key) {
+    const volume = AUDIO_VOLUMES[key]
+    if (volume == null) return 1
+    return Math.max(0, Math.min(1, volume))
+  },
+
+  playAudio(src, key) {
+    this.notifyAppUserGesture()
+
+    if (!wx.createInnerAudioContext || !src) return
+
+    if (!this._audioContexts) {
+      this._audioContexts = {}
+    }
+
+    if (!this._audioContexts[key]) {
       const audio = wx.createInnerAudioContext()
-      audio.src = DETAIL_AUDIO_SRC
-      audio.loop = false
+      audio.src = src
+      audio.volume = this.getAudioVolume(key)
       audio.obeyMuteSwitch = false
       audio.onError(() => {})
-      this._detailAudio = audio
+      this._audioContexts[key] = audio
     }
 
+    const audio = this._audioContexts[key]
     try {
-      this._detailAudio.stop()
-      this._detailAudio.seek(0)
-      this._detailAudio.play()
+      audio.volume = this.getAudioVolume(key)
+      audio.stop()
+      audio.seek(0)
+      audio.play()
     } catch (err) {
-      console.warn('播放音效失败: detail', err)
+      console.warn('播放音效失败:', key, err)
     }
+  },
+
+  playTapCue() {
+    this.playAudio(TAP_AUDIO_SRC, 'tap')
+  },
+
+  playBlacklistCue(blacklisted) {
+    this.playAudio(blacklisted ? GET_OUT_AUDIO_SRC : LUANSHI_AUDIO_SRC, blacklisted ? 'getOut' : 'luanshi')
   },
 
   onToggleBlacklist(e) {
-    this.playTapCue()
     const key = e.currentTarget.dataset.key
     const restaurant = this.data.restaurants.find(item => item.blacklistKey === key)
     if (!restaurant) return
 
     const result = toggleRestaurantBlacklist(restaurant)
+    this.playBlacklistCue(result.blacklisted)
     this.refreshRestaurants()
     wx.showToast({
       title: result.blacklisted ? '已打入冷宫' : '已放回江湖',

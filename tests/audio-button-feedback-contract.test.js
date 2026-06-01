@@ -19,20 +19,24 @@ assert(
 
 assert(
   ignored.some(item => item.type === 'file' && item.value === 'assets/audio/bgm-guanyu.mp3'),
-  'package config should ignore only the large local background music file'
+  'package config should ignore the large local background music file'
 )
 
 assert(
-  ignored.some(item => item.type === 'file' && item.value === 'assets/audio/DontWantTable.mp3') &&
+  !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/DontWantTable.mp3') &&
+    !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/GetOut.mp3') &&
+    !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/Luanshi.mp3') &&
+    !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/Suicide.mp3') &&
     ignored.some(item => item.type === 'file' && item.value === 'assets/images/陈留大食堂封面.jpg'),
-  'unused collected audio and large image assets should stay out of the mini program package until referenced'
+  'referenced local audio should be packaged while the unused large image stays ignored'
 )
 
 assert(
-  /wheelSpin:\s*'\/assets\/audio\/wheel-spin\.mp3'/.test(pageJs) &&
+  /wheelSpin:\s*null/.test(pageJs) &&
+    /AUDIO_CLIPS\.wheelSpin\s*=\s*assets\.wheelSpin\.tempFileURL/.test(pageJs) &&
     /slotSpin:\s*'\/assets\/audio\/slot-spin\.mp3'/.test(pageJs) &&
     /tap:\s*'\/assets\/audio\/tap\.mp3'/.test(pageJs),
-  'page should enable local wheel, slot, and tap sound effects'
+  'page should load oversized wheel audio from CloudBase while keeping small slot and tap effects local'
 )
 
 assert(

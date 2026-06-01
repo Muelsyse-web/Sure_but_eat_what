@@ -25,7 +25,11 @@
       },
       {
         "type": "file",
-        "value": "assets/audio/DontWantTable.mp3"
+        "value": "assets/audio/wheel-spin.mp3"
+      },
+      {
+        "type": "file",
+        "value": "assets/images/reward-code.png"
       },
       {
         "type": "file",

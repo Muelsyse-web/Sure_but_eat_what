@@ -17,7 +17,7 @@ assert(/easterEggText:\s*''/.test(js), 'page should track short easter egg copy'
 assert(/showResultSeal:\s*false/.test(js), 'page should track result seal animation state')
 
 assert(/BACKGROUND_MUSIC_FILE_ID\s*=\s*'cloud:\/\/cloud1-d7g8vh3395ea46f9d\.636c-cloud1-d7g8vh3395ea46f9d-1432599903\/bgm-guanyu\.mp3'/.test(appJs), 'app should point at the CloudBase Guan Yu background music')
-assert(/wx\.cloud\.getTempFileURL/.test(appJs), 'app should resolve CloudBase background music before playback')
+assert(/BGM_URL_FUNCTION_NAME\s*=\s*'getBgmUrl'/.test(appJs) && /wx\.cloud\.callFunction/.test(appJs), 'app should resolve CloudBase background music through the server-side BGM URL function')
 assert(/startBackgroundMusic/.test(appJs) && /loop\s*=\s*true/.test(appJs), 'app should start looping background music')
 assert(/onHide[\s\S]*pauseBackgroundMusic/.test(appJs), 'app should pause background music when hidden')
 

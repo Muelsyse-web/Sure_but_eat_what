@@ -1,0 +1,9 @@
+{
+  "name": "getAssetUrls",
+  "version": "1.0.0",
+  "description": "Resolve CloudBase temporary URLs for oversized package assets",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

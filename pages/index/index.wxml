@@ -480,7 +480,7 @@
         <text class="saved-wheels-close" hover-class="button-press-subtle" bindtap="onCloseReward">✕</text>
       </view>
       <image
-        wx:if="{{!rewardCodeLoadFailed}}"
+        wx:if="{{rewardCodeSrc && !rewardCodeLoadFailed}}"
         class="reward-code-image"
         src="{{rewardCodeSrc}}"
         mode="widthFix"
@@ -490,7 +490,7 @@
       ></image>
       <view wx:else class="reward-placeholder">
         <text>赞赏码尚未供上。</text>
-        <text>把图片放到 assets/images/reward-code.png 即可开坛。</text>
+        <text>请先部署 getAssetUrls 云函数并确认云端图片可访问。</text>
       </view>
       <text class="reward-hint">长按识别赞赏码，多少全凭江湖义气。</text>
     </view>

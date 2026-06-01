@@ -71,8 +71,9 @@ assert(
 assert(
   /赏些银两/.test(pageWxml) &&
   /showRewardModal/.test(pageJs) &&
-  /rewardCodeSrc:\s*'\/assets\/images\/reward-code\.png'/.test(pageJs),
-  'home screen should include a reward entry and reserve the reward-code image path'
+  /rewardCodeSrc:\s*''/.test(pageJs) &&
+  /rewardCodeSrc:\s*assets\.rewardCode\.tempFileURL/.test(pageJs),
+  'home screen should include a reward entry and resolve the reward-code image from CloudBase'
 )
 
 assert(
