@@ -6,15 +6,15 @@
       <text class="title">陈留大食堂</text>
       <text class="subtitle">是啊，吃什么？</text>
     </view>
-    <view wx:if="{{appMode !== 'choice'}}" class="mode-back" hover-class="button-press-subtle" bindtap="onBackToChoice">返回</view>
-    <view wx:if="{{appMode === 'nearby'}}" class="filter-icon {{nearbyHasFetched ? '' : 'disabled'}}" hover-class="button-press-subtle" bindtap="{{nearbyHasFetched ? 'onOpenFilter' : ''}}">
+    <view wx:if="{{appMode !== 'choice' && !interactionLocked}}" class="mode-back" hover-class="button-press-subtle" bindtap="onBackToChoice">返回</view>
+    <view wx:if="{{appMode === 'nearby' && !interactionLocked}}" class="filter-icon {{nearbyHasFetched ? '' : 'disabled'}}" hover-class="button-press-subtle" bindtap="{{nearbyHasFetched ? 'onOpenFilter' : ''}}">
       <text class="icon-text {{filterLabels.length > 0 && nearbyHasFetched ? 'active' : ''}}">天</text>
       <view wx:if="{{filterLabels.length > 0}}" class="filter-dot"></view>
     </view>
   </view>
 
   <!-- 当前激活的筛选标签 -->
-  <view wx:if="{{appMode === 'nearby' && filterLabels.length > 0}}" class="filter-chips">
+  <view wx:if="{{appMode === 'nearby' && filterLabels.length > 0 && !interactionLocked}}" class="filter-chips">
     <view wx:for="{{filterLabels}}" wx:key="index" class="chip">
       {{item}}
     </view>
@@ -53,17 +53,13 @@
         style="width:300px;height:300px;"
       ></canvas>
     </view>
-    <button class="save-wheel-button wheel-save-button {{canSaveManualWheel ? '' : 'disabled'}}" bindtap="onOpenSaveWheel" disabled="{{!canSaveManualWheel}}" hover-class="button-press">保存</button>
-    <button class="add-candidate-button" hover-class="button-press" bindtap="onOpenAddCandidate">+</button>
+    <button wx:if="{{!interactionLocked}}" class="save-wheel-button wheel-save-button {{canSaveManualWheel ? '' : 'disabled'}}" bindtap="onOpenSaveWheel" disabled="{{!canSaveManualWheel}}" hover-class="button-press">保存</button>
+    <button wx:if="{{!interactionLocked}}" class="add-candidate-button" hover-class="button-press" bindtap="onOpenAddCandidate">+</button>
   </view>
 
   <!-- 抽选区域 -->
   <view wx:if="{{appMode === 'nearby' || (appMode === 'manual' && manualPickerType === 'slot')}}" class="slot-container">
     <view class="slot-machine">
-      <view class="slot-topline">
-        <text>弹幕抽菜机</text>
-        <text>{{filterLabels.length > 0 ? '天意已被干预' : '天意自由发挥'}}</text>
-      </view>
       <view class="slot-window">
 
         <view class="slot-highlight"></view>
@@ -88,17 +84,22 @@
         <text class="placeholder-copy">{{appMode === 'manual' ? '先写几个想吃的，再让天意发挥' : (nearbyHasFetched ? '附近暂时没找到符合条件的饭局' : '点一下获取天意，再劳烦地图开口')}}</text>
       </view>
     </view>
-    <button wx:if="{{appMode === 'manual'}}" class="save-wheel-button wheel-save-button slot-save-button {{canSaveManualWheel ? '' : 'disabled'}}" bindtap="onOpenSaveWheel" disabled="{{!canSaveManualWheel}}" hover-class="button-press">保存</button>
-    <button wx:if="{{appMode === 'manual'}}" class="add-candidate-button slot-add-button" hover-class="button-press" bindtap="onOpenAddCandidate">+</button>
-  </view>
-
-  <view wx:if="{{appMode === 'manual'}}" class="manual-wheel-actions">
-    <button class="load-wheel-button" hover-class="button-press" bindtap="onOpenSavedWheels">往日种种，你当真不记得了吗？</button>
-    <button wx:if="{{manualCandidates.length > 0}}" class="load-wheel-button manage-candidates-button" hover-class="button-press" bindtap="onOpenManageCandidates">窥探全部天意</button>
+    <button wx:if="{{appMode === 'manual' && !interactionLocked}}" class="save-wheel-button wheel-save-button slot-save-button {{canSaveManualWheel ? '' : 'disabled'}}" bindtap="onOpenSaveWheel" disabled="{{!canSaveManualWheel}}" hover-class="button-press">保存</button>
+    <button wx:if="{{appMode === 'manual' && !interactionLocked}}" class="add-candidate-button slot-add-button" hover-class="button-press" bindtap="onOpenAddCandidate">+</button>
   </view>
 
   <!-- 旋转按钮 -->
-  <view wx:if="{{appMode !== 'choice'}}" class="spin-button-area">
+  <view wx:if="{{appMode !== 'choice' && !interactionLocked}}" class="spin-button-area">
+    <button
+      class="spin-button {{spinning ? 'spinning' : ''}} {{restaurantCount === 0 ? 'disabled' : ''}}"
+      hover-class="button-press"
+      bindtap="onSpin"
+      disabled="{{spinning || restaurantCount === 0 || loading}}"
+    >
+      <text wx:if="{{loading}}">天意正在搜索附近饭局</text>
+      <text wx:elif="{{spinning}}">菜单正在被侵蚀</text>
+      <text wx:else>让天意决定</text>
+    </button>
     <button
       wx:if="{{appMode === 'nearby'}}"
       class="fetch-nearby-button"
@@ -117,19 +118,14 @@
     >
       窥探全部天意
     </button>
-    <button
-      class="spin-button {{spinning ? 'spinning' : ''}} {{restaurantCount === 0 ? 'disabled' : ''}}"
-      hover-class="button-press"
-      bindtap="onSpin"
-      disabled="{{spinning || restaurantCount === 0 || loading}}"
-    >
-      <text wx:if="{{loading}}">天意正在搜索附近饭局</text>
-      <text wx:elif="{{spinning}}">菜单正在被侵蚀</text>
-      <text wx:else>让天意决定</text>
-    </button>
     <text wx:if="{{restaurantCount > 0 && !loading}}" class="available-count">
       {{appMode === 'manual' ? '名单里有 ' : '附近找到 '}}{{restaurantCount}} 家可选
     </text>
+  </view>
+
+  <view wx:if="{{appMode === 'manual' && !interactionLocked}}" class="manual-wheel-actions">
+    <button class="load-wheel-button" hover-class="button-press" bindtap="onOpenSavedWheels">往日种种，你当真不记得了吗？</button>
+    <button wx:if="{{manualCandidates.length > 0}}" class="load-wheel-button manage-candidates-button" hover-class="button-press" bindtap="onOpenManageCandidates">窥探全部天意</button>
   </view>
 
   <!-- 筛选面板（Bottom Sheet） -->

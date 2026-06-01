@@ -14,6 +14,7 @@ const MANUAL_WHEEL_SPIN_DURATION = 8300
 const SLOT_SPIN_DURATION = 4460
 const SLOT_RESULT_REVEAL_DELAY = 4560
 const DONT_WANT_TABLE_DELAY = 4056
+const FETCH_NEARBY_COOLDOWN_MS = 60 * 1000
 const ASSET_URL_FUNCTION_NAME = 'getAssetUrls'
 const DEFAULT_RADIUS = 1000
 const MIN_RADIUS = 10
@@ -27,6 +28,8 @@ const AUDIO_CLIPS = {
   wheelSpin: null,
   slotSpin: '/assets/audio/slot-spin.mp3',
   tap: '/assets/audio/tap.mp3',
+  tianyi: '/assets/audio/Tianyi.mp3',
+  noTianyi: '/assets/audio/NoTianyi.mp3',
   nameReveal: '/assets/audio/OnceSayMyNameITMXIASINI.mp3',
   dontWantTable: '/assets/audio/DontWantTable.mp3',
   suicide: '/assets/audio/Suicide.mp3',
@@ -36,6 +39,8 @@ const AUDIO_VOLUMES = {
   wheelSpin: 1,
   slotSpin: 1,
   tap: 1,
+  tianyi: 1,
+  noTianyi: 1,
   nameReveal: 1,
   dontWantTable: 1,
   suicide: 0.2
@@ -301,6 +306,8 @@ Page({
 
     // 抽选状态
     spinning: false,
+    interactionLocked: false,
+    retryingDance: false,
     slotItems: [],
     slotTransform: 'translateY(0px)',
     slotAnimating: false,
@@ -369,6 +376,9 @@ Page({
     restaurants: [], // 当前可用餐厅列表（手动列表，或附近搜索中过滤黑名单后的转盘候选）
     restaurantCount: 0, // 可用餐厅数量
     nearbyHasFetched: false,
+    nearbySnapshotRestaurants: [],
+    nearbySnapshotHasFetched: false,
+    lastFetchNearbyIntentAt: 0,
 
     // 加载状态
     loading: false
@@ -376,6 +386,7 @@ Page({
 
   _slotStartTimer: null,
   _slotFinishTimer: null,
+  _danceRetryTimer: null,
   _manualCanvasNode: null,
   _manualCanvasCtx: null,
   _manualDpr: 1,
@@ -479,6 +490,22 @@ Page({
     this.playAudioCue('tap')
   },
 
+  setInteractionLocked(locked) {
+    this.setData({ interactionLocked: !!locked })
+  },
+
+  isInteractionLocked() {
+    return this.data.interactionLocked === true
+  },
+
+  getFetchCooldownRemainingMs(now) {
+    const last = Number(this.data.lastFetchNearbyIntentAt || 0)
+    if (!last) return 0
+
+    const elapsed = Math.max(0, now - last)
+    return Math.max(0, FETCH_NEARBY_COOLDOWN_MS - elapsed)
+  },
+
   playSpinCue() {
     if (this.data.appMode === 'manual' && this.data.manualPickerType === 'wheel') {
       this.playAudioCue('wheelSpin')
@@ -510,19 +537,23 @@ Page({
     console.log('[SlotDebug] result.source:', restaurant && restaurant.source)
     this.playAudioCue('nameReveal')
     this.revealResultSeal()
+    this.setInteractionLocked(false)
     this.setData({
       spinning: false,
+      retryingDance: false,
       result: restaurant,
       showModal: true
     })
   },
 
   onChooseManual() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     this.playAudioCue('manual')
     this.showEasterEgg('名单已开，接着奏乐')
     clearTimeout(this._slotStartTimer)
     clearTimeout(this._slotFinishTimer)
+    clearTimeout(this._danceRetryTimer)
     this._manualCanvasNode = null
     this._manualCanvasCtx = null
     this.setData({
@@ -535,6 +566,8 @@ Page({
       showEditWheelItemsModal: false,
       showManageCandidatesModal: false,
       spinning: false,
+      interactionLocked: false,
+      retryingDance: false,
       slotItems: [],
       slotAnimating: false
     })
@@ -542,6 +575,9 @@ Page({
   },
 
   onChooseNearby() {
+    if (this.isInteractionLocked()) return
+    const snapshotRestaurants = this.data.nearbySnapshotRestaurants
+    const hasNearbySnapshot = this.data.nearbySnapshotHasFetched
     this.playTapCue()
     this.playAudioCue('nearby')
     this.showEasterEgg('天意开机')
@@ -550,7 +586,9 @@ Page({
       result: null,
       showModal: false,
       spinning: false,
-      allNearbyRestaurants: [],
+      interactionLocked: false,
+      retryingDance: false,
+      allNearbyRestaurants: hasNearbySnapshot ? snapshotRestaurants : [],
       restaurants: [],
       restaurantCount: 0,
       slotItems: [],
@@ -559,17 +597,24 @@ Page({
       loading: false,
       availableCuisineOptions: [],
       cuisineTags: buildCuisineTags([], []),
-      nearbyHasFetched: false
+      nearbyHasFetched: hasNearbySnapshot
     })
+    if (hasNearbySnapshot) {
+      this.syncNearbyCandidates(snapshotRestaurants)
+    }
   },
 
   onBackToChoice() {
+    if (this.isInteractionLocked()) return
     this.playAudioCue('suicide')
     clearTimeout(this._slotStartTimer)
     clearTimeout(this._slotFinishTimer)
+    clearTimeout(this._danceRetryTimer)
     this.setData({
       appMode: 'choice',
       spinning: false,
+      interactionLocked: false,
+      retryingDance: false,
       allNearbyRestaurants: [],
       restaurants: [],
       restaurantCount: 0,
@@ -616,6 +661,7 @@ Page({
   // ==================== 手动候选 ====================
 
   onOpenAddCandidate() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     this.setData({
       showAddCandidateModal: true,
@@ -671,6 +717,7 @@ Page({
   },
 
   onOpenSaveWheel() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     if (!this.data.canSaveManualWheel) {
       wx.showToast({
@@ -733,6 +780,7 @@ Page({
   },
 
   onOpenSavedWheels() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     this.setData({
       showSavedWheelsModal: true,
@@ -985,6 +1033,7 @@ Page({
   // ==================== 管理当前未保存名单 ====================
 
   onOpenManageCandidates() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     this.setData({
       showManageCandidatesModal: true,
@@ -1084,11 +1133,24 @@ Page({
 
   syncNearbyCandidates(allNearbyRestaurants) {
     const allItems = Array.isArray(allNearbyRestaurants) ? allNearbyRestaurants : []
-    const restaurants = applyRestaurantBlacklist(allItems)
+    const { filters } = this.data
+
+    // 应用客户端筛选（服务端不再做筛选，始终返回全量数据）
+    const filtered = applyClientFilters(allItems, {
+      cuisines: normalizeCuisines(filters.cuisines),
+      cost_min: filters.cost_min,
+      cost_max: filters.cost_max,
+      rating_min: filters.rating_min,
+      rating_max: filters.rating_max,
+      include_unrated: filters.include_unrated,
+      include_uncosted: filters.include_uncosted,
+      distance_max: filters.distance_max
+    })
+    const restaurants = applyRestaurantBlacklist(filtered)
     const hasMissingCost = allItems.some(item => !hasKnownCost(item))
     const hasMissingRating = allItems.some(item => !hasKnownRating(item))
     const availableCuisineOptions = buildAvailableCuisineOptions(allItems)
-    const selectedCuisines = normalizeCuisines(this.data.filters.cuisines)
+    const selectedCuisines = normalizeCuisines(filters.cuisines)
 
     this.setData({
       allNearbyRestaurants: allItems,
@@ -1268,9 +1330,24 @@ Page({
    * 获取大致位置，然后加载餐厅数据
    */
   onFetchNearbyIntent() {
+    if (this.isInteractionLocked()) return
+    const now = Date.now()
+    const cooldownRemainingMs = this.getFetchCooldownRemainingMs(now)
+    if (cooldownRemainingMs > 0) {
+      wx.showToast({
+        title: `天意刚开坛，稍等 ${Math.ceil(cooldownRemainingMs / 1000)} 秒`,
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+
     this.playTapCue()
     this.showEasterEgg('天意开坛')
-    this.setData({ nearbyHasFetched: true })
+    this.setData({
+      lastFetchNearbyIntentAt: now,
+      nearbyHasFetched: true
+    })
     this.loadRestaurants()
   },
 
@@ -1308,44 +1385,28 @@ Page({
     const { filters } = this.data
     const lat = this._currentLat
     const lng = this._currentLng
-    const cuisines = normalizeCuisines(filters.cuisines)
-    const radius = filters.distance_max || DEFAULT_RADIUS
 
-    // 检查是否有有效筛选条件（有筛选条件时不使用缓存，需重新请求）
-    const hasFilters = filters.cost_min !== null ||
-                       filters.cost_max !== null ||
-                       filters.rating_min !== null ||
-                       filters.rating_max !== null ||
-                       cuisines.length > 0 ||
-                       filters.distance_max !== null
-
-    // 无筛选条件时尝试缓存
-    let cachedItems = null
-    if (!hasFilters) {
-      cachedItems = getCachedRestaurants(lat, lng)
-    }
+    // 始终先尝试缓存（无论是否有筛选条件，筛选在客户端完成）
+    const cachedItems = getCachedRestaurants(lat, lng)
 
     if (cachedItems) {
-      // 缓存命中
+      // 缓存命中，客户端筛选
+      this.setData({
+        nearbySnapshotRestaurants: cachedItems,
+        nearbySnapshotHasFetched: true
+      })
       this.syncNearbyCandidates(cachedItems)
       return
     }
 
-    // 缓存未命中，调用云函数
+    // 缓存未命中，调用云函数（云函数返回全量数据，不做筛选）
     const that = this
     wx.cloud.callFunction({
       name: 'fetchRestaurants',
       data: {
         latitude: lat,
         longitude: lng,
-        radius,
-        cost_min: filters.cost_min,
-        cost_max: filters.cost_max,
-        rating_min: filters.rating_min,
-        rating_max: filters.rating_max,
-        include_unrated: filters.include_unrated,
-        include_uncosted: filters.include_uncosted,
-        cuisines,
+        radius: filters.distance_max || DEFAULT_RADIUS,
         distance_max: filters.distance_max
       },
       success(res) {
@@ -1382,9 +1443,13 @@ Page({
         }
 
         const restaurants = response.data || []
+        that.setData({
+          nearbySnapshotRestaurants: restaurants,
+          nearbySnapshotHasFetched: true
+        })
 
-        // 只有无筛选条件时才缓存（缓存全量数据）
-        if (!hasFilters && restaurants.length > 0) {
+        // 始终缓存全量数据（云函数不再做服务端筛选）
+        if (restaurants.length > 0) {
           setCachedRestaurants(lat, lng, restaurants)
         }
 
@@ -1505,6 +1570,7 @@ Page({
    * 用户点击"开始旋转"
    */
   onSpin() {
+    if (this.isInteractionLocked() && !this.data.retryingDance) return
     if (this.data.spinning) return
     if (this.data.restaurants.length === 0) {
       wx.showToast({
@@ -1517,6 +1583,7 @@ Page({
 
     this.playSpinCue()
     this.showEasterEgg('优势在胃')
+    this.setInteractionLocked(true)
 
     if (this.data.appMode === 'manual' && this.data.manualPickerType === 'wheel') {
       const targetIndex = Math.floor(Math.random() * this.data.manualCandidates.length)
@@ -1524,6 +1591,7 @@ Page({
 
       this.setData({
         spinning: true,
+        retryingDance: false,
         showModal: false
       })
       this._animateManualWheel(targetIndex, () => {
@@ -1609,6 +1677,7 @@ Page({
 
     this.setData({
       spinning: true,
+      retryingDance: false,
       showModal: false,
       slotAnimating: false,
       slotItems: spinItems.map(formatSlotItem),
@@ -1633,6 +1702,7 @@ Page({
    * 打开筛选面板
    */
   onOpenFilter() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     const { filters } = this.data
     const selectedCuisines = normalizeCuisines(filters.cuisines)
@@ -1666,7 +1736,7 @@ Page({
    * 关闭筛选面板
    */
   onCloseFilter() {
-    this.playTapCue()
+    this.playAudioCue('noTianyi')
     this.setData({ showFilterPanel: false })
   },
 
@@ -1745,7 +1815,7 @@ Page({
    * 应用筛选条件
    */
   onApplyFilter() {
-    this.playTapCue()
+    this.playAudioCue('tianyi')
     const validation = validateFilterInputs({
       costMinInput: this.data.costMinInput,
       costMaxInput: this.data.costMaxInput,
@@ -1836,6 +1906,7 @@ Page({
    * 重置筛选条件
    */
   resetFilters() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     const fullList = this.data.allNearbyRestaurants
     const restaurants = applyRestaurantBlacklist(fullList)
@@ -1874,6 +1945,7 @@ Page({
    * 关闭结果卡片
    */
   onCloseModal() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     this.setData({ showModal: false })
   },
@@ -1882,16 +1954,23 @@ Page({
    * 点击"换一家"
    */
   onSpinAgain() {
+    if (this.isInteractionLocked()) return
     this.playAudioCue('dontWantTable')
-    this.setData({ showModal: false })
+    this.setData({
+      showModal: false,
+      retryingDance: true
+    })
+    this.setInteractionLocked(true)
     this.showEasterEgg('换一家，接着奏乐')
     const that = this
-    setTimeout(() => {
+    clearTimeout(this._danceRetryTimer)
+    this._danceRetryTimer = setTimeout(() => {
       that.onSpin()
     }, DONT_WANT_TABLE_DELAY)
   },
 
   onOpenRestaurantList() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     // Preserve the full restaurant objects for the child page:
     // biz_ext.rating, biz_ext.cost, avg_cost, category, and distance stay intact.
@@ -1905,6 +1984,7 @@ Page({
    * 点击"导航去这里"
    */
   onNavigate() {
+    if (this.isInteractionLocked()) return
     this.playTapCue()
     const { result } = this.data
     if (!result || !result.location) return

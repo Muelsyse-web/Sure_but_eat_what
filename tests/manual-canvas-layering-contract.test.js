@@ -31,10 +31,14 @@ assert(
   'manual wheel canvas should be hidden while the saved-wheels dialog is open'
 )
 
-const slotContainerMatch = wxml.match(/<view wx:if="\{\{appMode === 'nearby' \|\| \(appMode === 'manual' && manualPickerType === 'slot'\)\}\}" class="slot-container">([\s\S]*?)<\/view>\s*<\/view>\s*<button wx:if="\{\{appMode === 'manual'\}\}" class="add-candidate-button slot-add-button"/)
+const slotContainerStart = wxml.indexOf('<view wx:if="{{appMode === \'nearby\' || (appMode === \'manual\' && manualPickerType === \'slot\')}}" class="slot-container">')
+const spinButtonAreaStart = wxml.indexOf('<!-- 旋转按钮 -->')
+const slotContainerMarkup = slotContainerStart >= 0 && spinButtonAreaStart > slotContainerStart
+  ? wxml.slice(slotContainerStart, spinButtonAreaStart)
+  : ''
 
 assert(
-  slotContainerMatch && !/<canvas\b/.test(slotContainerMatch[0]),
+  slotContainerMarkup && !/<canvas\b/.test(slotContainerMarkup),
   'manual slot mode should not render a canvas that can cover save/load dialogs'
 )
 

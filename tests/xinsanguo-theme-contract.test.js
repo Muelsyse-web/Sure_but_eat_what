@@ -12,7 +12,7 @@ assert(/是啊，吃什么？/.test(wxml), 'home screen should lead with the New
 assert(/我有饭局名单/.test(wxml), 'manual entry should use meal-list copy')
 assert(/附近有什么？/.test(wxml), 'nearby entry should keep the eating indecision framing')
 assert(/让天意决定/.test(wxml), 'spin button should package randomness as fate')
-assert(/弹幕抽菜机/.test(wxml), 'picker should include a barrage-style meme framing')
+assert(/天意尚未开坛/.test(wxml), 'picker should keep the fate-driven empty-state framing')
 assert(/说出吾名，吓汝一跳/.test(wxml), 'result card should use a New Three Kingdoms reveal gag')
 assert(/接着奏乐，接着舞/.test(wxml), 'spin-again button should use the requested dance-and-music copy')
 

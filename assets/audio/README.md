@@ -5,6 +5,8 @@ Put user-provided, licensed audio clips here:
 - `wheel-spin.mp3` - oversized hand wheel spin cue; ignored from the code package and loaded from CloudBase by `getAssetUrls`
 - `slot-spin.mp3` - local slot-machine spin cue, packaged with the mini program
 - `tap.mp3` - local general button tap cue, packaged with the mini program
+- `Tianyi.mp3` - local filter apply cue
+- `NoTianyi.mp3` - local filter cancel cue
 - `OnceSayMyNameITMXIASINI.mp3` - local one-shot cue when the home result bottom sheet appears
 - `DontWantTable.mp3` - local "change restaurant" cue; playback finishes before the next spin starts
 - `Suicide.mp3` - local back-to-choice cue

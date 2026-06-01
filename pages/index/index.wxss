@@ -638,6 +638,7 @@
 .spin-button {
   width: 268px;
   height: 54px;
+  margin-bottom: 10px;
   border-radius: 18px;
   background: linear-gradient(135deg, #2c2416, #7a6e64);
   color: #f5efdf;

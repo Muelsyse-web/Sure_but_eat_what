@@ -26,6 +26,8 @@ assert(
   !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/DontWantTable.mp3') &&
     !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/GetOut.mp3') &&
     !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/Luanshi.mp3') &&
+    !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/Tianyi.mp3') &&
+    !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/NoTianyi.mp3') &&
     !ignored.some(item => item.type === 'file' && item.value === 'assets/audio/Suicide.mp3') &&
     ignored.some(item => item.type === 'file' && item.value === 'assets/images/陈留大食堂封面.jpg'),
   'referenced local audio should be packaged while the unused large image stays ignored'

@@ -7,6 +7,8 @@ const audioFiles = [
   'assets/audio/wheel-spin.mp3',
   'assets/audio/slot-spin.mp3',
   'assets/audio/tap.mp3',
+  'assets/audio/Tianyi.mp3',
+  'assets/audio/NoTianyi.mp3',
   'assets/audio/OnceSayMyNameITMXIASINI.mp3',
   'assets/audio/DontWantTable.mp3',
   'assets/audio/Suicide.mp3',
