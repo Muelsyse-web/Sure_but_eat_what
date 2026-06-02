@@ -1363,14 +1363,23 @@ Page({
         that.fetchRestaurantData()
       },
       fail(err) {
-        // 大致位置获取失败时，使用默认坐标（杭州）
         console.warn('wx.getFuzzyLocation 获取大致位置失败:', err)
-        that._currentLat = 30.2741
-        that._currentLng = 120.1551
-        that.fetchRestaurantData()
+        that._currentLat = null
+        that._currentLng = null
+        that.setData({
+          loading: false,
+          nearbyHasFetched: false,
+          nearbySnapshotRestaurants: [],
+          nearbySnapshotHasFetched: false,
+          allNearbyRestaurants: [],
+          restaurants: [],
+          restaurantCount: 0,
+          slotItems: [],
+          slotTransform: 'translateY(0px)'
+        })
         that._showLocationPermissionGuide(err)
         wx.showToast({
-          title: '权限乱世，先用默认位置',
+          title: '定位未开，无法获取附近',
           icon: 'none',
           duration: 2000
         })
