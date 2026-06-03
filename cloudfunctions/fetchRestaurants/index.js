@@ -269,26 +269,15 @@ exports.main = async (event) => {
 
     const dedupedRestaurants = dedupeRestaurants(restaurants)
     const availableCuisines = buildAvailableCuisineOptions(dedupedRestaurants)
-    const filtered = applyFilters(dedupedRestaurants, {
-      cuisineList,
-      cost_min,
-      cost_max,
-      rating_min,
-      rating_max,
-      include_unrated,
-      include_uncosted,
-      radius: searchRadius
-    }).slice(0, 50)
+    const fullData = dedupedRestaurants.slice(0, 50)
 
     return {
       success: true,
-      data: filtered,
-      total: filtered.length,
+      data: fullData,
+      total: fullData.length,
       availableCuisines,
       providerSummary,
-      costFilterRequiresPrice: hasCostFilter(cost_min, cost_max),
-      ratingFilterRequiresRating: hasRatingFilter(rating_min, rating_max),
-      message: filtered.length === 0 ? '附近暂无符合条件的餐厅' : `找到 ${filtered.length} 家餐厅`
+      message: fullData.length === 0 ? '附近暂无餐厅' : `找到 ${fullData.length} 家餐厅`
     }
   } catch (err) {
     return {
