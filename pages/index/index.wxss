@@ -199,26 +199,6 @@
   box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.08), 0 8px 22px rgba(168, 134, 74, 0.22);
 }
 
-.reward-button {
-  position: fixed;
-  right: 18px;
-  bottom: 24px;
-  z-index: 12;
-  min-width: 92px;
-  height: 40px;
-  border-radius: 20px;
-  border: none;
-  background: rgba(44, 36, 22, 0.88);
-  color: #f5efdf;
-  font-size: 13px;
-  line-height: 40px;
-  box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.28), 0 8px 20px rgba(0, 0, 0, 0.24);
-}
-
-.reward-button::after {
-  border: none;
-}
-
 .easter-egg {
   position: fixed;
   top: 92px;
@@ -1025,13 +1005,12 @@
   border: none;
 }
 
-/* ==================== 转盘存档与赞赏弹层 ==================== */
+/* ==================== 转盘存档弹层 ==================== */
 .save-wheel-overlay,
 .saved-wheels-overlay,
 .rename-wheel-overlay,
 .edit-wheel-items-overlay,
-.manage-candidates-overlay,
-.reward-overlay {
+.manage-candidates-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -1051,8 +1030,7 @@
 .saved-wheels-overlay.visible,
 .rename-wheel-overlay.visible,
 .edit-wheel-items-overlay.visible,
-.manage-candidates-overlay.visible,
-.reward-overlay.visible {
+.manage-candidates-overlay.visible {
   opacity: 1;
   pointer-events: auto;
 }
@@ -1061,8 +1039,7 @@
 .saved-wheels-dialog,
 .rename-wheel-dialog,
 .edit-wheel-items-dialog,
-.manage-candidates-dialog,
-.reward-dialog {
+.manage-candidates-dialog {
   width: calc(100% - 48px);
   max-width: 360px;
   padding: 22px;
@@ -1078,8 +1055,7 @@
 .saved-wheels-dialog.visible,
 .rename-wheel-dialog.visible,
 .edit-wheel-items-dialog.visible,
-.manage-candidates-dialog.visible,
-.reward-dialog.visible {
+.manage-candidates-dialog.visible {
   transform: translateY(0);
 }
 
@@ -1265,8 +1241,7 @@
   border: none;
 }
 
-.saved-wheels-empty,
-.reward-placeholder {
+.saved-wheels-empty {
   min-height: 120px;
   display: flex;
   flex-direction: column;
@@ -1279,22 +1254,6 @@
   background: rgba(44, 36, 22, 0.07);
   color: rgba(201, 168, 76, 0.68);
   font-size: 13px;
-  line-height: 1.5;
-  text-align: center;
-}
-
-.reward-code-image {
-  display: block;
-  width: 240px;
-  margin: 4px auto 12px;
-  border-radius: 8px;
-  background: rgba(44, 36, 22, 0.08);
-}
-
-.reward-hint {
-  display: block;
-  color: rgba(201, 168, 76, 0.58);
-  font-size: 12px;
   line-height: 1.5;
   text-align: center;
 }

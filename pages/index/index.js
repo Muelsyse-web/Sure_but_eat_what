@@ -333,9 +333,6 @@ Page({
     manageCandidatesInput: '',
     easterEggText: '',
     showResultSeal: false,
-    showRewardModal: false,
-    rewardCodeSrc: '',
-    rewardCodeLoadFailed: false,
 
     // 结果数据
     result: null,
@@ -437,12 +434,6 @@ Page({
           AUDIO_CLIPS.wheelSpin = assets.wheelSpin.tempFileURL
         }
 
-        if (assets.rewardCode && assets.rewardCode.tempFileURL) {
-          this.setData({
-            rewardCodeSrc: assets.rewardCode.tempFileURL,
-            rewardCodeLoadFailed: false
-          })
-        }
       },
       fail: (err) => {
         this._cloudAssetUrlResolving = false
@@ -627,34 +618,7 @@ Page({
       showSavedWheelsModal: false,
       showRenameWheelModal: false,
       showEditWheelItemsModal: false,
-      showManageCandidatesModal: false,
-      showRewardModal: false
-    })
-  },
-
-  onOpenReward() {
-    this.playTapCue()
-    this.setData({
-      showRewardModal: true,
-      rewardCodeLoadFailed: false
-    })
-  },
-
-  onCloseReward() {
-    this.playTapCue()
-    this.setData({ showRewardModal: false })
-  },
-
-  onRewardCodeError() {
-    this.setData({ rewardCodeLoadFailed: true })
-  },
-
-  onPreviewRewardCode() {
-    if (this.data.rewardCodeLoadFailed || !this.data.rewardCodeSrc) return
-
-    wx.previewImage({
-      urls: [this.data.rewardCodeSrc],
-      current: this.data.rewardCodeSrc
+      showManageCandidatesModal: false
     })
   },
 

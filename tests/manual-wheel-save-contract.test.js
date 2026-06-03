@@ -11,6 +11,23 @@ const manualWheelsPath = path.join(root, 'utils/manualWheels.js')
 assert(fs.existsSync(manualWheelsPath), 'manual wheel persistence helper should exist')
 
 const manualWheelsJs = fs.readFileSync(manualWheelsPath, 'utf8')
+const removedPageTerms = [
+  '赏' + '些' + '银' + '两',
+  '赞' + '赏' + '码',
+  're' + 'wardCode',
+  'showRe' + 'wardModal',
+  'onOpenRe' + 'ward',
+  'onCloseRe' + 'ward',
+  'onPreviewRe' + 'wardCode'
+]
+const removedStyleTerms = [
+  're' + 'ward-button',
+  're' + 'ward-overlay',
+  're' + 'ward-dialog',
+  're' + 'ward-placeholder',
+  're' + 'ward-code-image',
+  're' + 'ward-hint'
+]
 
 assert(
   /savedManualWheels/.test(manualWheelsJs) && /MAX_SAVED_WHEELS\s*=\s*30/.test(manualWheelsJs),
@@ -69,21 +86,8 @@ assert(
 )
 
 assert(
-  /赏些银两/.test(pageWxml) &&
-  /showRewardModal/.test(pageJs) &&
-  /rewardCodeSrc:\s*''/.test(pageJs) &&
-  /rewardCodeSrc:\s*assets\.rewardCode\.tempFileURL/.test(pageJs),
-  'home screen should include a reward entry and resolve the reward-code image from CloudBase'
-)
-
-assert(
-  /wx\.previewImage/.test(pageJs),
-  'reward code image should be previewable for long-press recognition'
-)
-
-assert(
-  !/requestPayment/.test(pageJs + pageWxml + manualWheelsJs),
-  'reward-code implementation should not introduce wx.requestPayment'
+  removedPageTerms.every(term => !(pageJs + pageWxml).includes(term)),
+  'removed funding entry, modal state, and image handlers should stay absent from the page'
 )
 
 assert(
@@ -91,6 +95,6 @@ assert(
   /\.load-wheel-button::after/.test(pageWxss) &&
   /\.wheel-save-button\.disabled/.test(pageWxss) &&
   /\.load-wheel-button\s*{[^}]*background:\s*linear-gradient\(135deg,\s*#8b6d3f,\s*#a8864a\)/.test(pageWxss) &&
-  /\.reward-button::after/.test(pageWxss),
+  removedStyleTerms.every(term => !pageWxss.includes(term)),
   'new buttons should remove WeChat default pseudo borders and expose enabled/disabled styling'
 )

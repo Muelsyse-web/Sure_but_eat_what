@@ -1,8 +1,7 @@
 const cloud = require('wx-server-sdk')
 
 const ASSET_FILE_IDS = {
-  wheelSpin: 'cloud://cloud1-d7g8vh3395ea46f9d.636c-cloud1-d7g8vh3395ea46f9d-1432599903/wheel-spin.mp3',
-  rewardCode: 'cloud://cloud1-d7g8vh3395ea46f9d.636c-cloud1-d7g8vh3395ea46f9d-1432599903/reward-code.png'
+  wheelSpin: 'cloud://cloud1-d7g8vh3395ea46f9d.636c-cloud1-d7g8vh3395ea46f9d-1432599903/wheel-spin.mp3'
 }
 
 cloud.init({

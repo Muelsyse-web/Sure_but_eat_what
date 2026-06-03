@@ -11,11 +11,20 @@ const assetFunctionPackagePath = path.join(root, 'cloudfunctions/getAssetUrls/pa
 const assetFunctionJs = fs.existsSync(assetFunctionJsPath) ? fs.readFileSync(assetFunctionJsPath, 'utf8') : ''
 const assetFunctionPackage = fs.existsSync(assetFunctionPackagePath) ? fs.readFileSync(assetFunctionPackagePath, 'utf8') : ''
 const ignored = projectConfig.packOptions.ignore || []
+const removedImagePath = ['assets/images', 're' + 'ward-code.png'].join('/')
+const removedAssetTerms = [
+  '赏' + '些' + '银' + '两',
+  '赞' + '赏' + '码',
+  're' + 'wardCode',
+  're' + 'ward-code',
+  're' + 'wardCodeSrc',
+  're' + 'wardCodeLoadFailed'
+]
 
 assert(
   ignored.some(item => item.type === 'file' && item.value === 'assets/audio/wheel-spin.mp3') &&
-    ignored.some(item => item.type === 'file' && item.value === 'assets/images/reward-code.png'),
-  'package config should ignore oversized wheel audio and reward code because they resolve from CloudBase'
+    !ignored.some(item => item.type === 'file' && item.value === removedImagePath),
+  'package config should ignore oversized wheel audio without retaining the removed funding image'
 )
 
 assert(
@@ -28,29 +37,24 @@ assert(
 assert(
   /wheelSpin:\s*null/.test(pageJs) &&
     !/wheelSpin:\s*'\/assets\/audio\/wheel-spin\.mp3'/.test(pageJs) &&
-    !/rewardCodeSrc:\s*'\/assets\/images\/reward-code\.png'/.test(pageJs),
-  'oversized wheel audio and reward image should not be hardcoded to local package paths'
+    !pageJs.includes('re' + 'wardCodeSrc') &&
+    !pageJs.includes(removedImagePath),
+  'oversized wheel audio and removed funding image should not be hardcoded to local package paths'
 )
 
 assert(
   /assets\.wheelSpin\.tempFileURL/.test(pageJs) &&
     /AUDIO_CLIPS\.wheelSpin\s*=\s*assets\.wheelSpin\.tempFileURL/.test(pageJs) &&
-    /assets\.rewardCode\.tempFileURL/.test(pageJs) &&
-    /rewardCodeSrc:\s*assets\.rewardCode\.tempFileURL/.test(pageJs),
-  'index page should install resolved CloudBase URLs into the wheel audio cue and reward image state'
+    removedAssetTerms.every(term => !pageJs.includes(term)),
+  'index page should install resolved CloudBase URLs into the wheel audio cue only'
 )
 
 assert(
-  /wx:if="\{\{rewardCodeSrc && !rewardCodeLoadFailed\}\}"/.test(pageWxml) &&
-    /if\s*\(this\.data\.rewardCodeLoadFailed\s*\|\|\s*!this\.data\.rewardCodeSrc\)\s*return/.test(pageJs),
-  'reward image should render and preview only after a CloudBase URL has resolved'
-)
-
-assert(
-  /const ASSET_FILE_IDS\s*=\s*\{[\s\S]*wheelSpin:\s*'cloud:\/\/cloud1-d7g8vh3395ea46f9d\.636c-cloud1-d7g8vh3395ea46f9d-1432599903\/wheel-spin\.mp3'[\s\S]*rewardCode:\s*'cloud:\/\/cloud1-d7g8vh3395ea46f9d\.636c-cloud1-d7g8vh3395ea46f9d-1432599903\/reward-code\.png'/.test(assetFunctionJs) &&
+  /const ASSET_FILE_IDS\s*=\s*\{[\s\S]*wheelSpin:\s*'cloud:\/\/cloud1-d7g8vh3395ea46f9d\.636c-cloud1-d7g8vh3395ea46f9d-1432599903\/wheel-spin\.mp3'/.test(assetFunctionJs) &&
+    removedAssetTerms.every(term => !assetFunctionJs.includes(term)) &&
     /cloud\.getTempFileURL\(\{[\s\S]*fileList:\s*Object\.values\(ASSET_FILE_IDS\)/.test(assetFunctionJs) &&
     /wx-server-sdk/.test(assetFunctionPackage),
-  'getAssetUrls cloud function should resolve the uploaded wheel audio and reward code file IDs'
+  'getAssetUrls cloud function should resolve only the uploaded wheel audio file ID'
 )
 
 assert(
@@ -60,6 +64,6 @@ assert(
 )
 
 assert(
-  !/把图片放到 assets\/images\/reward-code\.png 即可开坛/.test(pageWxml),
-  'reward-code fallback copy should not tell users to package the ignored local image'
+  removedAssetTerms.every(term => !(pageJs + pageWxml + assetFunctionJs).includes(term)),
+  'removed funding UI, state, and CloudBase asset references should stay absent'
 )

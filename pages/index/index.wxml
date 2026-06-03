@@ -32,9 +32,7 @@
 
     <button class="choice-button primary-choice" hover-class="button-press" bindtap="onChooseManual">我有饭局名单</button>
     <button class="choice-button secondary-choice" hover-class="button-press" bindtap="onChooseNearby">附近有什么？</button>
-
   </view>
-  <button wx:if="{{appMode === 'choice'}}" class="reward-button" hover-class="button-press" bindtap="onOpenReward">赏些银两</button>
 
   <view wx:if="{{easterEggText}}" class="easter-egg">{{easterEggText}}</view>
 
@@ -467,29 +465,4 @@
       </view>
     </view>
   </view>
-
-  <!-- 赞赏码 -->
-  <view class="reward-overlay {{showRewardModal ? 'visible' : ''}}" bindtap="onCloseReward">
-    <view class="reward-dialog {{showRewardModal ? 'visible' : ''}}" catchtap="noop">
-      <view class="saved-wheels-header">
-        <text class="candidate-title">赏些银两</text>
-        <text class="saved-wheels-close" hover-class="button-press-subtle" bindtap="onCloseReward">✕</text>
-      </view>
-      <image
-        wx:if="{{rewardCodeSrc && !rewardCodeLoadFailed}}"
-        class="reward-code-image"
-        src="{{rewardCodeSrc}}"
-        mode="widthFix"
-        bindtap="onPreviewRewardCode"
-        binderror="onRewardCodeError"
-        show-menu-by-longpress="{{true}}"
-      ></image>
-      <view wx:else class="reward-placeholder">
-        <text>赞赏码尚未供上。</text>
-        <text>请先部署 getAssetUrls 云函数并确认云端图片可访问。</text>
-      </view>
-      <text class="reward-hint">长按识别赞赏码，多少全凭江湖义气。</text>
-    </view>
-  </view>
-
 </view>

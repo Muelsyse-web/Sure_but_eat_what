@@ -31,7 +31,7 @@ Use one dense commercial area and one residential area.
 
 - Small interaction effects in `assets/audio` can be packaged locally when each file stays comfortably below the WeChat 200K quality-check threshold.
 - Large background music stays on CloudBase; `bgm-guanyu.mp3` should remain ignored from the local code package.
-- Oversized page assets such as `wheel-spin.mp3` and `reward-code.png` stay on CloudBase and are resolved by `cloudfunctions/getAssetUrls`.
+- Oversized page assets such as `wheel-spin.mp3` stay on CloudBase and are resolved by `cloudfunctions/getAssetUrls`.
 - Deploy `cloudfunctions/getBgmUrl` after BGM changes; the client asks this cloud function for a temporary BGM URL to avoid CloudBase storage authority failures.
 - Deploy `cloudfunctions/getAssetUrls` after changing oversized page asset file IDs.
 - Local sound-effect helpers should notify `getApp().notifyUserGesture()` so the CloudBase BGM can retry after the user's first tap.
